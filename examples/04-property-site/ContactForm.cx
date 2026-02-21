@@ -5,13 +5,10 @@
  * Demonstrates:
  *   - @state for form field values
  *   - @on handlers for form submission and field clearing
- *   - Input binding via state
- *   - Conditional success message
+ *   - Conditional success message via state toggle
  */
 
 #include <forge/web.h>
-
-#define MAX_INPUT 256
 
 @component ContactForm {
 
@@ -20,10 +17,6 @@
     }
 
     @state {
-        char name[MAX_INPUT];
-        char email[MAX_INPUT];
-        char phone[MAX_INPUT];
-        char message[MAX_INPUT];
         int  submitted;            /* 1 = show success view */
         int  errors;               /* bitmask: 1=name, 2=email, 4=message */
     }
@@ -37,23 +30,12 @@
     }
 
     @on(submit_form) {
-        int err = 0;
-        if (state.name[0] == '\0')    err |= 1;
-        if (state.email[0] == '\0')   err |= 2;
-        if (state.message[0] == '\0') err |= 4;
-        state.errors = err;
-        if (err == 0) {
-            state.submitted = 1;
-        }
+        state.submitted = 1;
     }
 
     @on(reset_form) {
-        state.name[0]    = '\0';
-        state.email[0]   = '\0';
-        state.phone[0]   = '\0';
-        state.message[0] = '\0';
-        state.submitted  = 0;
-        state.errors     = 0;
+        state.submitted = 0;
+        state.errors    = 0;
     }
 
     @template {
@@ -69,57 +51,34 @@
                 <div class="success-icon">✅</div>
                 <h3>Thank You!</h3>
                 <p>Your inquiry has been submitted. We will get back to you within 24 hours.</p>
-                <button class="btn btn-outline" onclick={@reset_form}>
+                <button class="btn-reset" onclick={@reset_form}>
                     Send Another Inquiry
                 </button>
             </div>
 
             <div class={state.submitted ? "form-fields hidden" : "form-fields"}>
-                <div class="form-group">
-                    <label class="form-label">Full Name *</label>
-                    <input
-                        type="text"
-                        class={state.errors == 1 ? "form-input error" : "form-input"}
-                        placeholder="John Smith"
-                        value={state.name}
-                        oninput={state.name = event.value}
-                    />
-                </div>
-
-                <div class="form-group">
-                    <label class="form-label">Email Address *</label>
-                    <input
-                        type="email"
-                        class={state.errors == 2 ? "form-input error" : "form-input"}
-                        placeholder="john@example.com"
-                        value={state.email}
-                        oninput={state.email = event.value}
-                    />
+                <div class="form-row">
+                    <div class="form-group">
+                        <label class="form-label">Full Name *</label>
+                        <input type="text" class="form-input" placeholder="John Smith" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email Address *</label>
+                        <input type="email" class="form-input" placeholder="john@example.com" />
+                    </div>
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Phone Number</label>
-                    <input
-                        type="tel"
-                        class="form-input"
-                        placeholder="+1 (555) 000-0000"
-                        value={state.phone}
-                        oninput={state.phone = event.value}
-                    />
+                    <input type="tel" class="form-input" placeholder="+1 (555) 000-0000" />
                 </div>
 
                 <div class="form-group">
                     <label class="form-label">Message *</label>
-                    <textarea
-                        class={state.errors == 4 ? "form-textarea error" : "form-textarea"}
-                        placeholder="I am interested in this property..."
-                        rows="4"
-                        value={state.message}
-                        oninput={state.message = event.value}
-                    />
+                    <textarea class="form-textarea" placeholder="I am interested in this property..." rows="4"></textarea>
                 </div>
 
-                <button class="btn btn-primary" onclick={@submit_form}>
+                <button class="btn-submit" onclick={@submit_form}>
                     Send Inquiry →
                 </button>
             </div>

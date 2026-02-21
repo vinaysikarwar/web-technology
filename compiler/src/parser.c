@@ -215,7 +215,10 @@ static Field parse_field(Parser *p) {
 
   /* Optional initializer: = expr */
   if (match_tok(p, TOK_ASSIGN)) {
-    const char *init_start = p->lex->current;
+    /* p->current is the first token AFTER '=', which is the beginning of
+     * the initializer expression.  p->lex->current is PAST that first token,
+     * so use p->current.start to include it. */
+    const char *init_start = p->current.start;
     /* collect everything up to ; */
     while (!check(p, TOK_SEMICOLON) && !check(p, TOK_EOF))
       advance(p);

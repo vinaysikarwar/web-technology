@@ -16,12 +16,14 @@
 #include <stdio.h>
 
 typedef struct {
-    int es_modules;   /* emit ESM (import/export) vs CommonJS/IIFE */
-    int web_component; /* wrap as HTMLElement custom element        */
-    int typescript;   /* emit .d.ts type declarations              */
+  int es_modules;    /* emit ESM (import/export) vs CommonJS/IIFE */
+  int web_component; /* wrap as HTMLElement custom element        */
+  int typescript;    /* emit .d.ts type declarations              */
+  int no_wasm;       /* emit pure-JS DOM renderer (no WASM)       */
 } BindingOptions;
 
-int binding_gen_component(const ComponentNode *c, const BindingOptions *opts, FILE *out);
-int binding_gen_types(const ComponentNode *c, FILE *out);   /* TypeScript .d.ts */
+int binding_gen_component(const ComponentNode *c, const BindingOptions *opts,
+                          FILE *out);
+int binding_gen_types(const ComponentNode *c, FILE *out); /* TypeScript .d.ts */
 
 #endif /* FORGE_BINDING_GEN_H */

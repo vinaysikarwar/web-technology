@@ -5,14 +5,12 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>ForgeEstates — Premium Property Listings</title>
-    <meta name="description"
-        content="Discover luxury properties with ForgeEstates. Built with Forge Framework — C compiled to WebAssembly for blazing-fast interactivity." />
+    <meta name="description" content="Discover luxury properties with ForgeEstates. Built with Forge Framework." />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap"
         rel="stylesheet" />
     <style>
-        /* ─── Reset & Base ───────────────────────────────────────────────────── */
         *,
         *::before,
         *::after {
@@ -31,17 +29,22 @@
             color: #1e293b;
             line-height: 1.6;
             -webkit-font-smoothing: antialiased;
-            -moz-osx-font-smoothing: grayscale;
         }
 
-        /* ─── Navbar ──────────────────────────────────────────────────────────── */
+        /* Forge component styling — these match the @style blocks in the .cx files */
+        forge-app {
+            display: block;
+            min-height: 100vh;
+            background: #f0f4f8;
+        }
+
+        /* Navbar */
         .navbar {
             position: sticky;
             top: 0;
             z-index: 1000;
             background: rgba(255, 255, 255, 0.85);
             backdrop-filter: blur(20px) saturate(180%);
-            -webkit-backdrop-filter: blur(20px) saturate(180%);
             border-bottom: 1px solid rgba(226, 232, 240, 0.6);
             padding: 0 24px;
         }
@@ -63,7 +66,6 @@
 
         .nav-logo {
             font-size: 1.6rem;
-            filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.1));
         }
 
         .nav-title {
@@ -73,7 +75,6 @@
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
             background-clip: text;
-            letter-spacing: -0.02em;
         }
 
         .nav-links {
@@ -97,11 +98,11 @@
             background: rgba(99, 102, 241, 0.08);
         }
 
-        /* ─── Hero ────────────────────────────────────────────────────────────── */
+        /* Hero */
         .hero {
             position: relative;
             overflow: hidden;
-            background: linear-gradient(135deg, #0f172a 0%, #1e1b4b 50%, #312e81 100%);
+            background: linear-gradient(135deg, #0f172a, #1e1b4b, #312e81);
             padding: 100px 24px 80px;
         }
 
@@ -112,26 +113,14 @@
             right: -20%;
             width: 600px;
             height: 600px;
-            background: radial-gradient(circle, rgba(99, 102, 241, 0.3) 0%, transparent 70%);
+            background: radial-gradient(circle, rgba(99, 102, 241, 0.3), transparent 70%);
             border-radius: 50%;
-            animation: heroGlow 8s ease-in-out infinite alternate;
+            animation: glow 8s ease-in-out infinite alternate;
         }
 
-        .hero::after {
-            content: '';
-            position: absolute;
-            bottom: -30%;
-            left: -10%;
-            width: 500px;
-            height: 500px;
-            background: radial-gradient(circle, rgba(139, 92, 246, 0.2) 0%, transparent 70%);
-            border-radius: 50%;
-            animation: heroGlow 6s ease-in-out 2s infinite alternate;
-        }
-
-        @keyframes heroGlow {
+        @keyframes glow {
             from {
-                transform: scale(1) translate(0, 0);
+                transform: scale(1);
                 opacity: 0.6;
             }
 
@@ -158,19 +147,16 @@
             border-radius: 999px;
             font-size: 0.8rem;
             font-weight: 600;
-            letter-spacing: 0.02em;
             margin-bottom: 24px;
-            animation: fadeInUp 0.6s ease-out;
         }
 
         .hero-title {
             font-size: clamp(2.2rem, 5vw, 3.5rem);
             font-weight: 900;
-            color: #ffffff;
+            color: #fff;
             line-height: 1.1;
             letter-spacing: -0.03em;
             margin-bottom: 20px;
-            animation: fadeInUp 0.6s ease-out 0.1s both;
         }
 
         .hero-subtitle {
@@ -179,38 +165,12 @@
             max-width: 540px;
             margin: 0 auto 40px;
             line-height: 1.7;
-            animation: fadeInUp 0.6s ease-out 0.2s both;
-        }
-
-        .hero-cta {
-            display: inline-flex;
-            align-items: center;
-            gap: 8px;
-            background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: #fff;
-            padding: 14px 32px;
-            border-radius: 12px;
-            font-size: 1rem;
-            font-weight: 600;
-            text-decoration: none;
-            border: none;
-            cursor: pointer;
-            box-shadow: 0 4px 20px rgba(99, 102, 241, 0.35);
-            transition: all 0.25s;
-            animation: fadeInUp 0.6s ease-out 0.25s both;
-            margin-bottom: 48px;
-        }
-
-        .hero-cta:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 8px 30px rgba(99, 102, 241, 0.45);
         }
 
         .hero-stats {
             display: flex;
             justify-content: center;
             gap: 48px;
-            animation: fadeInUp 0.6s ease-out 0.3s both;
         }
 
         .stat-item {
@@ -222,30 +182,16 @@
         .stat-value {
             font-size: 2rem;
             font-weight: 800;
-            color: #ffffff;
-            letter-spacing: -0.02em;
+            color: #fff;
         }
 
         .stat-label {
             font-size: 0.85rem;
             color: #94a3b8;
             font-weight: 500;
-            margin-top: 2px;
         }
 
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
-            }
-
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
-        }
-
-        /* ─── Properties Section ──────────────────────────────────────────────── */
+        /* Properties Section */
         .properties-section {
             max-width: 1200px;
             margin: 0 auto;
@@ -261,7 +207,6 @@
             font-size: 2rem;
             font-weight: 800;
             color: #0f172a;
-            letter-spacing: -0.02em;
             margin-bottom: 8px;
         }
 
@@ -280,7 +225,7 @@
         .filter-btn {
             padding: 8px 24px;
             border: 1.5px solid #e2e8f0;
-            background: #ffffff;
+            background: #fff;
             color: #64748b;
             font-size: 0.9rem;
             font-weight: 600;
@@ -298,28 +243,30 @@
 
         .filter-btn.active {
             background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: #ffffff;
+            color: #fff;
             border-color: transparent;
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
-        /* ─── Property Grid ───────────────────────────────────────────────────── */
+        /* Property Grid */
         .property-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(340px, 1fr));
             gap: 24px;
         }
 
-        /* PropertyCard Styling */
+        /* PropertyCard */
+        forge-property-card {
+            display: block;
+        }
+
         .property-card {
-            background: #ffffff;
+            background: #fff;
             border-radius: 16px;
             overflow: hidden;
             box-shadow: 0 2px 16px rgba(0, 0, 0, 0.06);
             border: 1px solid #e2e8f0;
-            display: flex;
-            flex-direction: column;
-            transition: transform 0.25s ease, box-shadow 0.25s ease;
+            transition: transform 0.25s, box-shadow 0.25s;
             cursor: pointer;
         }
 
@@ -328,35 +275,8 @@
             box-shadow: 0 16px 48px rgba(0, 0, 0, 0.12);
         }
 
-        .property-card.featured {
-            border-color: #6366f1;
-            box-shadow: 0 2px 16px rgba(99, 102, 241, 0.15);
-        }
-
-        .property-card.featured:hover {
-            box-shadow: 0 16px 48px rgba(99, 102, 241, 0.2);
-        }
-
-        .property-image-wrap {
-            position: relative;
-            height: 220px;
-            overflow: hidden;
-        }
-
-        .property-image {
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            transition: transform 0.4s ease;
-        }
-
-        .property-card:hover .property-image {
-            transform: scale(1.05);
-        }
-
         .property-image-placeholder {
-            width: 100%;
-            height: 100%;
+            height: 200px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -364,40 +284,12 @@
             position: relative;
         }
 
-        .property-image-placeholder.img-1 {
+        .property-image-placeholder.sale-bg {
             background: linear-gradient(135deg, #dbeafe, #c7d2fe, #e0e7ff);
         }
 
-        .property-image-placeholder.img-2 {
-            background: linear-gradient(135deg, #e0e7ff, #ddd6fe, #f5d0fe);
-        }
-
-        .property-image-placeholder.img-3 {
-            background: linear-gradient(135deg, #dcfce7, #d1fae5, #cffafe);
-        }
-
-        .property-image-placeholder.img-4 {
+        .property-image-placeholder.rent-bg {
             background: linear-gradient(135deg, #fef3c7, #fde68a, #fed7aa);
-        }
-
-        .property-image-placeholder.img-5 {
-            background: linear-gradient(135deg, #e0e7ff, #c7d2fe, #a5b4fc);
-        }
-
-        .property-image-placeholder.img-6 {
-            background: linear-gradient(135deg, #fce7f3, #fbcfe8, #f5d0fe);
-        }
-
-        .property-image-placeholder::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background:
-                radial-gradient(circle at 20% 80%, rgba(99, 102, 241, 0.08) 0%, transparent 50%),
-                radial-gradient(circle at 80% 20%, rgba(139, 92, 246, 0.08) 0%, transparent 50%);
         }
 
         .property-badge {
@@ -410,24 +302,19 @@
             font-weight: 700;
             text-transform: uppercase;
             letter-spacing: 0.08em;
-            z-index: 2;
+            color: #fff;
         }
 
         .property-badge.sale {
             background: linear-gradient(135deg, #10b981, #059669);
-            color: #ffffff;
         }
 
         .property-badge.rent {
             background: linear-gradient(135deg, #f59e0b, #d97706);
-            color: #ffffff;
         }
 
         .property-info {
             padding: 20px 24px 24px;
-            flex: 1;
-            display: flex;
-            flex-direction: column;
         }
 
         .property-title {
@@ -435,7 +322,6 @@
             font-weight: 700;
             color: #0f172a;
             margin-bottom: 4px;
-            letter-spacing: -0.01em;
         }
 
         .property-location {
@@ -449,10 +335,9 @@
             font-weight: 800;
             color: #6366f1;
             margin-bottom: 16px;
-            letter-spacing: -0.02em;
         }
 
-        .property-price .price-period {
+        .property-price .price-suffix {
             font-size: 0.85rem;
             font-weight: 500;
             color: #94a3b8;
@@ -463,19 +348,15 @@
             gap: 16px;
             padding-top: 16px;
             border-top: 1px solid #f1f5f9;
-            margin-top: auto;
         }
 
         .detail-item {
             font-size: 0.8rem;
             color: #64748b;
             font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 4px;
         }
 
-        /* ─── Contact Section ─────────────────────────────────────────────────── */
+        /* Contact Section */
         .contact-section {
             background: linear-gradient(135deg, #0f172a, #1e1b4b);
             padding: 80px 24px;
@@ -493,9 +374,8 @@
         .contact-heading {
             font-size: 2rem;
             font-weight: 800;
-            color: #ffffff;
+            color: #fff;
             margin-bottom: 16px;
-            letter-spacing: -0.02em;
         }
 
         .contact-desc {
@@ -531,16 +411,16 @@
             flex-shrink: 0;
         }
 
-        /* ─── Contact Form Styling ────────────────────────────────────────────── */
-        .contact-form-wrap {
-            background: #ffffff;
+        /* ContactForm */
+        forge-contact-form {
+            display: block;
+        }
+
+        .contact-form-card {
+            background: #fff;
             border-radius: 16px;
             padding: 32px;
             box-shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
-        }
-
-        .form-header {
-            margin-bottom: 24px;
         }
 
         .form-title {
@@ -553,6 +433,7 @@
         .form-subtitle {
             font-size: 0.9rem;
             color: #64748b;
+            margin-bottom: 24px;
             line-height: 1.6;
         }
 
@@ -600,34 +481,32 @@
             min-height: 100px;
         }
 
-        /* Buttons */
-        .btn {
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-            font-family: inherit;
-            font-size: 0.95rem;
-            font-weight: 600;
-            padding: 14px 28px;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.25s;
-            border: none;
+        .form-error {
+            color: #ef4444;
+            font-size: 0.8rem;
+            margin-top: 4px;
         }
 
-        .btn-primary {
+        .btn-submit {
             width: 100%;
+            padding: 14px 28px;
             background: linear-gradient(135deg, #6366f1, #8b5cf6);
-            color: #ffffff;
+            color: #fff;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.95rem;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: inherit;
+            transition: all 0.25s;
             box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
         }
 
-        .btn-primary:hover {
+        .btn-submit:hover {
             transform: translateY(-1px);
             box-shadow: 0 6px 20px rgba(99, 102, 241, 0.4);
         }
 
-        /* ─── Success Message ──────────────────────────────────────────────────── */
         .form-success {
             display: none;
             text-align: center;
@@ -636,7 +515,10 @@
 
         .form-success.visible {
             display: block;
-            animation: fadeInUp 0.4s ease-out;
+        }
+
+        .form-fields.hidden {
+            display: none;
         }
 
         .form-success .success-icon {
@@ -657,7 +539,7 @@
             line-height: 1.6;
         }
 
-        .btn-outline {
+        .btn-reset {
             background: transparent;
             color: #6366f1;
             border: 1.5px solid #6366f1;
@@ -670,15 +552,11 @@
             transition: all 0.2s;
         }
 
-        .btn-outline:hover {
+        .btn-reset:hover {
             background: #eef2ff;
         }
 
-        .form-fields.hidden {
-            display: none;
-        }
-
-        /* ─── Footer ──────────────────────────────────────────────────────────── */
+        /* Footer */
         .site-footer {
             background: #0f172a;
             border-top: 1px solid rgba(255, 255, 255, 0.05);
@@ -714,16 +592,7 @@
             color: #64748b;
         }
 
-        .footer-copy a {
-            color: #818cf8;
-            text-decoration: none;
-        }
-
-        .footer-copy a:hover {
-            text-decoration: underline;
-        }
-
-        /* ─── Responsive ──────────────────────────────────────────────────────── */
+        /* Responsive */
         @media (max-width: 768px) {
             .hero {
                 padding: 60px 24px 50px;
@@ -745,22 +614,10 @@
                 grid-template-columns: 1fr;
             }
 
-            .contact-info {
-                text-align: center;
-            }
-
-            .contact-details {
-                align-items: center;
-            }
-
             .footer-inner {
                 flex-direction: column;
                 gap: 12px;
                 text-align: center;
-            }
-
-            .nav-links {
-                gap: 4px;
             }
 
             .form-row {
@@ -768,7 +625,6 @@
             }
         }
 
-        /* ─── Custom Scrollbar ────────────────────────────────────────────────── */
         ::-webkit-scrollbar {
             width: 8px;
         }
@@ -790,299 +646,13 @@
 
 <body>
 
-    <!-- ═══════════ NAVBAR ═══════════ -->
-    <nav class="navbar">
-        <div class="nav-inner">
-            <div class="nav-brand">
-                <span class="nav-logo">🏡</span>
-                <span class="nav-title">ForgeEstates</span>
-            </div>
-            <div class="nav-links">
-                <a class="nav-link active" href="#properties">Properties</a>
-                <a class="nav-link" href="#contact">Contact</a>
-            </div>
-        </div>
-    </nav>
+    <!-- Forge components render here via Custom Elements -->
+    <forge-app></forge-app>
 
-    <!-- ═══════════ HERO ═══════════ -->
-    <section class="hero">
-        <div class="hero-content">
-            <span class="hero-badge">⚡ Powered by Forge WASM</span>
-            <h1 class="hero-title">Find Your Dream Home</h1>
-            <p class="hero-subtitle">
-                Discover luxury properties crafted for modern living. Browse our curated collection of homes,
-                apartments, and premium estates.
-            </p>
-            <a class="hero-cta" href="#properties">Browse Properties ↓</a>
-            <div class="hero-stats">
-                <div class="stat-item">
-                    <span class="stat-value">150+</span>
-                    <span class="stat-label">Properties</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value">50+</span>
-                    <span class="stat-label">Cities</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-value">1,200+</span>
-                    <span class="stat-label">Happy Clients</span>
-                </div>
-            </div>
-        </div>
-    </section>
-
-    <!-- ═══════════ PROPERTIES ═══════════ -->
-    <section class="properties-section" id="properties">
-        <div class="section-header">
-            <h2 class="section-title">Featured Properties</h2>
-            <p class="section-subtitle">Handpicked properties for you</p>
-            <div class="filter-bar">
-                <button class="filter-btn active" data-filter="all">All</button>
-                <button class="filter-btn" data-filter="sale">For Sale</button>
-                <button class="filter-btn" data-filter="rent">For Rent</button>
-            </div>
-        </div>
-
-        <div class="property-grid" id="propertyGrid">
-
-            <!-- Card 1 — Sale, Featured -->
-            <div class="property-card featured" data-type="sale">
-                <div class="property-image-wrap">
-                    <div class="property-image-placeholder img-1">🏠</div>
-                    <span class="property-badge sale">For Sale</span>
-                </div>
-                <div class="property-info">
-                    <h3 class="property-title">Modern Villa with Pool</h3>
-                    <p class="property-location">📍 Beverly Hills, CA</p>
-                    <div class="property-price">$2,450,000</div>
-                    <div class="property-details">
-                        <span class="detail-item">🛏 5 Beds</span>
-                        <span class="detail-item">🚿 4 Baths</span>
-                        <span class="detail-item">📐 4,200 sq ft</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 2 — Rent -->
-            <div class="property-card" data-type="rent">
-                <div class="property-image-wrap">
-                    <div class="property-image-placeholder img-2">🏙️</div>
-                    <span class="property-badge rent">For Rent</span>
-                </div>
-                <div class="property-info">
-                    <h3 class="property-title">Downtown Luxury Penthouse</h3>
-                    <p class="property-location">📍 Manhattan, NY</p>
-                    <div class="property-price">$8,500 <span class="price-period">/ month</span></div>
-                    <div class="property-details">
-                        <span class="detail-item">🛏 3 Beds</span>
-                        <span class="detail-item">🚿 2 Baths</span>
-                        <span class="detail-item">📐 2,100 sq ft</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 3 — Sale -->
-            <div class="property-card" data-type="sale">
-                <div class="property-image-wrap">
-                    <div class="property-image-placeholder img-3">🏡</div>
-                    <span class="property-badge sale">For Sale</span>
-                </div>
-                <div class="property-info">
-                    <h3 class="property-title">Cozy Suburban Family Home</h3>
-                    <p class="property-location">📍 Austin, TX</p>
-                    <div class="property-price">$485,000</div>
-                    <div class="property-details">
-                        <span class="detail-item">🛏 4 Beds</span>
-                        <span class="detail-item">🚿 3 Baths</span>
-                        <span class="detail-item">📐 2,800 sq ft</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 4 — Rent, Featured -->
-            <div class="property-card featured" data-type="rent">
-                <div class="property-image-wrap">
-                    <div class="property-image-placeholder img-4">🏖️</div>
-                    <span class="property-badge rent">For Rent</span>
-                </div>
-                <div class="property-info">
-                    <h3 class="property-title">Beachfront Studio Apartment</h3>
-                    <p class="property-location">📍 Miami, FL</p>
-                    <div class="property-price">$3,200 <span class="price-period">/ month</span></div>
-                    <div class="property-details">
-                        <span class="detail-item">🛏 1 Bed</span>
-                        <span class="detail-item">🚿 1 Bath</span>
-                        <span class="detail-item">📐 650 sq ft</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 5 — Sale -->
-            <div class="property-card" data-type="sale">
-                <div class="property-image-wrap">
-                    <div class="property-image-placeholder img-5">⛰️</div>
-                    <span class="property-badge sale">For Sale</span>
-                </div>
-                <div class="property-info">
-                    <h3 class="property-title">Mountain Retreat Cabin</h3>
-                    <p class="property-location">📍 Aspen, CO</p>
-                    <div class="property-price">$1,200,000</div>
-                    <div class="property-details">
-                        <span class="detail-item">🛏 3 Beds</span>
-                        <span class="detail-item">🚿 2 Baths</span>
-                        <span class="detail-item">📐 1,800 sq ft</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Card 6 — Rent -->
-            <div class="property-card" data-type="rent">
-                <div class="property-image-wrap">
-                    <div class="property-image-placeholder img-6">🌇</div>
-                    <span class="property-badge rent">For Rent</span>
-                </div>
-                <div class="property-info">
-                    <h3 class="property-title">Urban Loft with City Views</h3>
-                    <p class="property-location">📍 Chicago, IL</p>
-                    <div class="property-price">$4,200 <span class="price-period">/ month</span></div>
-                    <div class="property-details">
-                        <span class="detail-item">🛏 2 Beds</span>
-                        <span class="detail-item">🚿 1 Bath</span>
-                        <span class="detail-item">📐 1,200 sq ft</span>
-                    </div>
-                </div>
-            </div>
-
-        </div>
-    </section>
-
-    <!-- ═══════════ CONTACT ═══════════ -->
-    <section class="contact-section" id="contact">
-        <div class="contact-inner">
-            <div class="contact-info">
-                <h2 class="contact-heading">Ready to Move In?</h2>
-                <p class="contact-desc">
-                    Whether you're looking to buy or rent, our team of experienced agents is here to help you find the
-                    perfect property. Get in touch today!
-                </p>
-                <div class="contact-details">
-                    <div class="contact-detail-item">
-                        <span class="detail-icon">📞</span>
-                        <span>+1 (555) 234-5678</span>
-                    </div>
-                    <div class="contact-detail-item">
-                        <span class="detail-icon">✉️</span>
-                        <span>hello@forgeestates.com</span>
-                    </div>
-                    <div class="contact-detail-item">
-                        <span class="detail-icon">📍</span>
-                        <span>100 Forge Avenue, San Francisco, CA 94105</span>
-                    </div>
-                </div>
-            </div>
-
-            <div class="contact-form-wrap">
-                <div class="form-header">
-                    <h2 class="form-title">📬 Get in Touch</h2>
-                    <p class="form-subtitle">Interested in a property? Fill out the form below and our agent will
-                        contact you shortly.</p>
-                </div>
-
-                <div id="formSuccess" class="form-success">
-                    <div class="success-icon">✅</div>
-                    <h3>Thank You!</h3>
-                    <p>Your inquiry has been submitted successfully. We'll get back to you within 24 hours.</p>
-                    <button class="btn-outline" onclick="resetForm()">Send Another Inquiry</button>
-                </div>
-
-                <form id="contactForm" class="form-fields" onsubmit="submitForm(event)">
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label class="form-label" for="name">Full Name *</label>
-                            <input class="form-input" type="text" id="name" placeholder="John Smith" required />
-                        </div>
-                        <div class="form-group">
-                            <label class="form-label" for="email">Email Address *</label>
-                            <input class="form-input" type="email" id="email" placeholder="john@example.com" required />
-                        </div>
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="phone">Phone Number</label>
-                        <input class="form-input" type="tel" id="phone" placeholder="+1 (555) 000-0000" />
-                    </div>
-                    <div class="form-group">
-                        <label class="form-label" for="message">Message *</label>
-                        <textarea class="form-textarea" id="message" placeholder="I'm interested in this property..."
-                            rows="4" required></textarea>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Send Inquiry →</button>
-                </form>
-            </div>
-        </div>
-    </section>
-
-    <!-- ═══════════ FOOTER ═══════════ -->
-    <footer class="site-footer">
-        <div class="footer-inner">
-            <div class="footer-brand">
-                <span class="footer-logo">🏡</span>
-                <span class="footer-title">ForgeEstates</span>
-            </div>
-            <p class="footer-copy">
-                Built with <a href="#">Forge Framework</a> — C → WebAssembly. Zero runtime overhead.
-            </p>
-        </div>
-    </footer>
-
-    <!-- ═══════════ INTERACTIVITY ═══════════ -->
-    <script>
-        /* ── Filter Buttons ─────────────────── */
-        const filterBtns = document.querySelectorAll('.filter-btn');
-        const cards = document.querySelectorAll('.property-card');
-
-        filterBtns.forEach(btn => {
-            btn.addEventListener('click', () => {
-                filterBtns.forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                const filter = btn.dataset.filter;
-                cards.forEach(card => {
-                    if (filter === 'all' || card.dataset.type === filter) {
-                        card.style.display = '';
-                        card.style.animation = 'fadeInUp 0.4s ease-out both';
-                    } else {
-                        card.style.display = 'none';
-                    }
-                });
-            });
-        });
-
-        /* ── Contact Form ───────────────────── */
-        function submitForm(e) {
-            e.preventDefault();
-            document.getElementById('contactForm').classList.add('hidden');
-            document.getElementById('formSuccess').classList.add('visible');
-        }
-        function resetForm() {
-            document.getElementById('contactForm').reset();
-            document.getElementById('contactForm').classList.remove('hidden');
-            document.getElementById('formSuccess').classList.remove('visible');
-        }
-
-        /* ── Scroll-triggered animations ────── */
-        const observer = new IntersectionObserver((entries) => {
-            entries.forEach(entry => {
-                if (entry.isIntersecting) {
-                    entry.target.style.animation = 'fadeInUp 0.5s ease-out both';
-                    observer.unobserve(entry.target);
-                }
-            });
-        }, { threshold: 0.1 });
-
-        document.querySelectorAll('.property-card, .contact-form-wrap, .contact-info').forEach(el => {
-            el.style.opacity = '0';
-            observer.observe(el);
-        });
-    </script>
+    <!-- Load compiled Forge component modules (no-wasm mode: pure JS) -->
+    <script type="module" src="dist/PropertyCard.forge.js"></script>
+    <script type="module" src="dist/ContactForm.forge.js"></script>
+    <script type="module" src="dist/App.forge.js"></script>
 
 </body>
 
