@@ -9,6 +9,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <ctype.h>
+
 
 /* ─── Internals ───────────────────────────────────────────────────────────── */
 
@@ -95,37 +97,6 @@ static TypeRef *parse_type(Parser *p) {
 
 /* ─── Raw Block Capture ───────────────────────────────────────────────────── */
 
-/* Capture everything between { } as a raw string (for event handler bodies) */
-static char *capture_block(Parser *p) {
-    consume(p, TOK_LBRACE, "Expected '{' to open block");
-    const char *start = p->lex->current;
-    int depth = 1;
-    while (peek_char_raw(p->lex) && depth > 0) {
-        char c = *p->lex->current;
-        if (c == '{') depth++;
-        if (c == '}') depth--;
-        if (depth > 0) {
-            /* advance raw pointer */
-            if (c == '\n') { p->lex->line++; p->lex->line_start = p->lex->current + 1; }
-            p->lex->current++;
-        }
-    }
-    size_t len = (size_t)(p->lex->current - start);
-    char *body = malloc(len + 1);
-    memcpy(body, start, len);
-    body[len] = '\0';
-    /* consume closing } */
-    if (*p->lex->current == '}') {
-        p->lex->current++;
-    }
-    /* Re-sync parser token */
-    advance(p);
-    return body;
-}
-
-/* Allow raw character peeking through lexer struct */
-static char peek_char_raw(Lexer *lex) { return *lex->current; }
-
 /* ─── Field Parsing (@props, @state sections) ─────────────────────────────── */
 
 static Field parse_field(Parser *p) {
@@ -171,11 +142,14 @@ static Field parse_field(Parser *p) {
 /* ─── Style Section ───────────────────────────────────────────────────────── */
 
 static void parse_style_section(Parser *p, ComponentNode *comp) {
-    /* Already consumed @style, now read { property: value; ... } */
-    lexer_set_mode(p->lex, LEX_MODE_STYLE);
-    advance(p); /* sync current token */
-
+    /* p->current is '{' in C mode — consume it BEFORE switching to style mode.
+     * If we switch first, lex_style would see '{' and swallow the entire block
+     * as a dynamic expression token. */
     consume(p, TOK_LBRACE, "Expected '{' after @style");
+
+    /* Now safe to enter style mode for the property: value; pairs */
+    lexer_set_mode(p->lex, LEX_MODE_STYLE);
+    advance(p); /* prime: load first style token */
 
     int cap = 8;
     comp->style = malloc(sizeof(StyleRule) * cap);
@@ -218,8 +192,6 @@ static void parse_style_section(Parser *p, ComponentNode *comp) {
 }
 
 /* ─── Template Parsing ────────────────────────────────────────────────────── */
-
-static HtmlNode *parse_html_node(Parser *p);
 
 static char *collect_expr(Parser *p) {
     /* cursor is right after { — collect until matching } */
@@ -296,7 +268,6 @@ static HtmlNode *parse_element(Parser *p, const char *tag) {
     while (!check(p, TOK_EOF)) {
         /* Check for closing tag </tag> */
         if (check(p, TOK_LT)) {
-            Token saved = p->current;
             advance(p); /* consume < */
             if (match_tok(p, TOK_SLASH)) {
                 /* closing tag */

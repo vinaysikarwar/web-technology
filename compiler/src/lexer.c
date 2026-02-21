@@ -295,25 +295,39 @@ static Token lex_style(Lexer *lex) {
 
     if (c == '\0') return make_token(lex, TOK_EOF, start);
     if (c == '}') {
+        /* This } closes the @style block itself */
         advance(lex);
         lex->mode = LEX_MODE_C;
         return make_token(lex, TOK_RBRACE, start);
     }
     if (c == '{') {
-        advance(lex);
-        return make_token(lex, TOK_LBRACE, start);
+        /*
+         * Dynamic value expression: {state.x ? "a" : "b"}
+         * Consume the entire balanced {...} as a single HTML_ATTR token so
+         * the inner } never triggers a mode switch or a premature RBRACE.
+         */
+        advance(lex); /* consume opening { */
+        int depth = 1;
+        while (peek_char(lex) && depth > 0) {
+            char ch = peek_char(lex);
+            if (ch == '{') depth++;
+            else if (ch == '}') depth--;
+            if (depth > 0) advance(lex); /* keep inner chars, stop before final } */
+        }
+        if (peek_char(lex) == '}') advance(lex); /* consume closing } */
+        return make_token(lex, TOK_HTML_ATTR, start);
     }
     if (c == ':') { advance(lex); return make_token(lex, TOK_COLON, start); }
     if (c == ';') { advance(lex); return make_token(lex, TOK_SEMICOLON, start); }
 
-    /* property name or value (everything until : ; { } ) */
+    /* Static property name or value — read until a delimiter */
     while (peek_char(lex) && peek_char(lex) != ':' && peek_char(lex) != ';' &&
            peek_char(lex) != '{' && peek_char(lex) != '}') {
         advance(lex);
     }
     Token tok = make_token(lex, TOK_HTML_ATTR, start);
     /* trim trailing whitespace from the captured text */
-    while (tok.length > 0 && isspace(tok.start[tok.length - 1])) tok.length--;
+    while (tok.length > 0 && isspace((unsigned char)tok.start[tok.length - 1])) tok.length--;
     return tok;
 }
 

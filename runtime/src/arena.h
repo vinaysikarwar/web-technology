@@ -50,6 +50,9 @@ size_t arena_remaining(const Arena *a);
 extern Arena g_render_arena;   /* reset each frame */
 extern Arena g_persist_arena;  /* persists across frames */
 
+/* Initialize both arenas — call once at startup */
+void forge_arena_init_all(void);
+
 /* Shorthand helpers */
 #define FORGE_ALLOC(n)       arena_alloc(&g_persist_arena, (n))
 #define FORGE_CALLOC(c, s)   arena_calloc(&g_persist_arena, (c), (s))

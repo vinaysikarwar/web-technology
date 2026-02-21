@@ -1,0 +1,26 @@
+#include <forge/web.h>
+
+@component Button {
+    @props {
+        char *label;
+        void (*onClick)(void);
+    }
+    @state {
+        int hovered = 0;
+    }
+    @style {
+        background: #4f46e5;
+        color:      white;
+        padding:    10px 20px;
+        border-radius: 8px;
+        cursor:     pointer;
+    }
+    @on(click)   { if (props.onClick) props.onClick(); }
+    @on(hover)   { state.hovered = 1; }
+    @on(unhover) { state.hovered = 0; }
+    @template {
+        <button onclick={@click} onmouseenter={@hover} onmouseleave={@unhover}>
+            {props.label}
+        </button>
+    }
+}

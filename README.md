@@ -29,8 +29,8 @@ Key advantages:
 
 ```bash
 # 1. Build the compiler
-git clone https://github.com/your-org/forge
-cd forge
+git clone https://github.com/vinaysikarwar/web-technology
+cd web-technology
 make
 
 # 2. Write a component
