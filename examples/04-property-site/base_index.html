@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ForgeEstates — Premium Property Listings</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
+        rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Plus Jakarta Sans', sans-serif;
+            background-color: #f8fafc;
+            color: #1e293b;
+            overflow-x: hidden;
+        }
+    </style>
+</head>
+
+<body>
+
+    <!-- Forge components render here via Custom Elements -->
+    <forge-app></forge-app>
+
+    <!-- API Data Fetching Script -->
+    <script type="module">
+        async function init() {
+            try {
+                const response = await fetch('api/properties.json');
+                const properties = await response.json();
+
+                // Wait for custom element to be defined
+                await customElements.whenDefined('forge-app');
+                const app = document.querySelector('forge-app');
+
+                // Inject properties into the component state
+                if (app) {
+                    // We must ensure the component is hydrated before setting state
+                    // or set it in a way that triggers a refresh
+                    app.properties = properties;
+                    // Trigger a manual refresh if needed, but Forge components should observe this
+                    if (app._refresh) app._refresh();
+                }
+            } catch (e) {
+                console.error("Failed to load properties:", e);
+            }
+        }
+        init();
+    </script>
+
+    <!-- Load compiled Forge component modules (no-wasm mode: pure JS) -->
+    <script type="module" src="dist/PropertyCard.forge.js"></script>
+    <script type="module" src="dist/PropertyDetail.forge.js"></script>
+    <script type="module" src="dist/ContactForm.forge.js"></script>
+    <script type="module" src="dist/App.forge.js"></script>
+
+</body>
+
+</html>

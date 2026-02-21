@@ -1,0 +1,66 @@
+@component PropertyDetail {
+    @props {
+        char *title;
+        char *location;
+        int  price;
+        int  bedrooms;
+        int  bathrooms;
+        int  area;
+        char *type;
+        char *description;
+    }
+
+    @on(go_back) {
+        /* This will be handled by the parent routing logic */
+    }
+
+    @template {
+        <div class="property-detail">
+            <header class="detail-header">
+                <a href="#" class="back-link">← Back to Listings</a>
+                <h1 class="detail-title">{props.title}</h1>
+                <p class="detail-location">📍 {props.location}</p>
+            </header>
+
+            <div class="detail-grid">
+                <div class="detail-main">
+                    <div class="detail-image-placeholder">
+                        IMAGE PLACEHOLDER
+                    </div>
+                    <div class="detail-info-box">
+                        <h2>Description</h2>
+                        <p>{props.description}</p>
+                    </div>
+                </div>
+
+                <aside class="detail-sidebar">
+                    <div class="price-card">
+                        <div class="price-value">${props.price}</div>
+                        <div class="price-label">Listing Price</div>
+                        <button class="btn-primary">Schedule a Tour</button>
+                    </div>
+
+                    <div class="specs-card">
+                        <h3>Property Specs</h3>
+                        <div class="spec-row">
+                            <span>Bedrooms</span>
+                            <strong>{props.bedrooms}</strong>
+                        </div>
+                        <div class="spec-row">
+                            <span>Bathrooms</span>
+                            <strong>{props.bathrooms}</strong>
+                        </div>
+                        <div class="spec-row">
+                            <span>Total Area</span>
+                            <strong>{props.area} sq ft</strong>
+                        </div>
+                        <div class="spec-row">
+                            <span>Type</span>
+                            <strong>{props.type}</strong>
+                        </div>
+                    </div>
+                </aside>
+            </div>
+        </div>
+    }
+}

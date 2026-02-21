@@ -1,0 +1,74 @@
+[
+    {
+        "id": 1,
+        "title": "Modern Villa with Pool",
+        "location": "Beverly Hills, CA",
+        "price": 2450000,
+        "bedrooms": 5,
+        "bathrooms": 4,
+        "area": 4200,
+        "type": "sale",
+        "featured": 1,
+        "description": "This stunning modern villa features an open-concept design with floor-to-ceiling windows, a private infinity pool, and breathtaking views of the city. Perfect for luxury entertainment and comfortable living."
+    },
+    {
+        "id": 2,
+        "title": "Downtown Luxury Penthouse",
+        "location": "Manhattan, NY",
+        "price": 8500,
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "area": 2100,
+        "type": "rent",
+        "featured": 0,
+        "description": "Experience the ultimate city lifestyle in this exquisite penthouse located in the heart of Manhattan. Featuring high-end finishes, a designer kitchen, and a private terrace overlooking the skyline."
+    },
+    {
+        "id": 3,
+        "title": "Cozy Suburban Family Home",
+        "location": "Austin, TX",
+        "price": 485000,
+        "bedrooms": 4,
+        "bathrooms": 3,
+        "area": 2800,
+        "type": "sale",
+        "featured": 0,
+        "description": "A beautiful family home in a quiet suburban neighborhood. Large backyard, updated kitchen, and spacious living areas make this the perfect place to raise a family."
+    },
+    {
+        "id": 4,
+        "title": "Beachfront Studio Apartment",
+        "location": "Miami, FL",
+        "price": 3200,
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "area": 650,
+        "type": "rent",
+        "featured": 1,
+        "description": "Steps away from the sand, this beachfront studio offers modern amenities and spectacular ocean views. Ideal for a vacation home or a minimalist coastal lifestyle."
+    },
+    {
+        "id": 5,
+        "title": "Mountain Retreat Cabin",
+        "location": "Aspen, CO",
+        "price": 1200000,
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "area": 1800,
+        "type": "sale",
+        "featured": 0,
+        "description": "A rustic yet luxurious cabin nestled in the heart of the Rocky Mountains. Features a stone fireplace, cedar finishings, and easy access to world-class skiing."
+    },
+    {
+        "id": 6,
+        "title": "Urban Loft with City Views",
+        "location": "Chicago, IL",
+        "price": 4200,
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "area": 1200,
+        "type": "rent",
+        "featured": 0,
+        "description": "Modern industrial loft with exposed brick, high ceilings, and massive windows. Located in a vibrant neighborhood with plenty of dining and nightlife options."
+    }
+]

@@ -7,6 +7,11 @@
  *   - Exposes a DOM custom element (<forge-button>) or a JS class
  *   - Routes browser events → WASM dispatch function
  *   - Handles prop serialization/deserialization
+ *
+ * In no-wasm + prerender mode, also generates:
+ *   - Static HTML fragments for each component (.forge.html)
+ *   - A fully assembled pre-rendered index.html
+ *   - Hydration-aware JS that attaches to existing DOM
  */
 
 #ifndef FORGE_BINDING_GEN_H
@@ -20,10 +25,22 @@ typedef struct {
   int web_component; /* wrap as HTMLElement custom element        */
   int typescript;    /* emit .d.ts type declarations              */
   int no_wasm;       /* emit pure-JS DOM renderer (no WASM)       */
+  int prerender;     /* emit pre-rendered static HTML + hydration  */
 } BindingOptions;
 
 int binding_gen_component(const ComponentNode *c, const BindingOptions *opts,
                           FILE *out);
 int binding_gen_types(const ComponentNode *c, FILE *out); /* TypeScript .d.ts */
+
+/* ─── Pre-rendering (SSG) ───────────────────────────────────────────────────
+ * Generates static HTML for a component template, recursively inlining
+ * child component content.
+ *
+ * `registry` is an array of all available ComponentNode pointers so that
+ * when a <ChildComponent> is encountered, its template can be inlined.
+ */
+int binding_gen_prerender(const ComponentNode *c,
+                          const ComponentNode **registry, int registry_count,
+                          FILE *out);
 
 #endif /* FORGE_BINDING_GEN_H */

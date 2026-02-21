@@ -44,13 +44,12 @@ static void print_usage(void) {
          "  -g             Emit DWARF debug info\n"
          "  --ast          Dump AST, no code gen\n"
          "  --no-wasm      Generate .gen.c only, skip Clang\n"
+         "  --prerender    Generate static HTML for SEO (SSG)\n"
          "  --no-types     Skip TypeScript .d.ts output\n"
          "  --iife         JS as IIFE (not ES module)\n"
          "  --no-web-comp  Skip customElements.define\n"
          "  -v, --version  Print version\n"
-         "  -h, --help     Print this help\n\n"
-         "Example:\n"
-         "  forge compile -o dist -O2 src/Button.cx src/App.cx\n");
+         "  -h, --help     Print this help\n\n");
 }
 
 /* Load file into a heap buffer, return NULL on failure */
@@ -94,6 +93,7 @@ typedef struct {
   const char *out_dir;
   int dump_ast;
   int no_wasm;
+  int prerender;
   int no_types;
   int esm;
   int web_component;
@@ -101,6 +101,10 @@ typedef struct {
   int debug;
   int verbose;
 } CompileConfig;
+
+/* Global registry for cross-component SSG inlining */
+static const ComponentNode *registry[1024];
+static int registry_count = 0;
 
 static int compile_file(const char *path, const CompileConfig *cfg) {
   printf("forge: compiling %s\n", path);
@@ -143,8 +147,6 @@ static int compile_file(const char *path, const CompileConfig *cfg) {
   /* ── AST Dump ── */
   if (cfg->dump_ast) {
     ast_dump_program(prog);
-    ast_free_program(prog);
-    free(src);
     return 0;
   }
 
@@ -203,10 +205,15 @@ static int compile_file(const char *path, const CompileConfig *cfg) {
       .web_component = cfg->web_component,
       .typescript = !cfg->no_types,
       .no_wasm = cfg->no_wasm,
+      .prerender = cfg->prerender,
   };
 
   for (int i = 0; i < prog->component_count; i++) {
     const ComponentNode *c = prog->components[i];
+
+    /* Add to global registry for cross-component pre-rendering */
+    if (registry_count < 1024)
+      registry[registry_count++] = c;
 
     /* .forge.js */
     char js_path[512];
@@ -232,8 +239,6 @@ static int compile_file(const char *path, const CompileConfig *cfg) {
     }
   }
 
-  ast_free_program(prog);
-  free(src);
   return rc;
 }
 
@@ -266,6 +271,7 @@ int main(int argc, char **argv) {
       .out_dir = "./dist",
       .dump_ast = 0,
       .no_wasm = 0,
+      .prerender = 0,
       .no_types = 0,
       .esm = 1,
       .web_component = 1,
@@ -288,6 +294,8 @@ int main(int argc, char **argv) {
       cfg.dump_ast = 1;
     } else if (strcmp(argv[i], "--no-wasm") == 0) {
       cfg.no_wasm = 1;
+    } else if (strcmp(argv[i], "--prerender") == 0) {
+      cfg.prerender = 1;
     } else if (strcmp(argv[i], "--no-types") == 0) {
       cfg.no_types = 1;
     } else if (strcmp(argv[i], "--iife") == 0) {
@@ -317,6 +325,25 @@ int main(int argc, char **argv) {
   for (int i = 0; i < file_count; i++) {
     rc |= compile_file(input_files[i], &cfg);
   }
+
+  /* SSG Pass: Generate pre-rendered HTML for each component */
+  if (cfg.prerender && rc == 0) {
+    for (int i = 0; i < registry_count; i++) {
+      char html_path[512];
+      snprintf(html_path, sizeof(html_path), "%s/%s.forge.html", cfg.out_dir,
+               registry[i]->name);
+      FILE *hf = fopen(html_path, "w");
+      if (hf) {
+        binding_gen_prerender(registry[i], registry, registry_count, hf);
+        fclose(hf);
+        printf("forge: \033[32m✓\033[0m %s (SSG)\n", html_path);
+      }
+    }
+  }
+
+  /* Note: In a production compiler, we would properly track all Program
+     pointers to free them here. For this implementation, the process is about
+     to exit anyway, but we've avoided the use-after-free crash. */
 
   free(input_files);
 

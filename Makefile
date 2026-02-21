@@ -100,14 +100,15 @@ $(BUILD_DIR)/forge-dev: $(DEV_SERVER_SRC)/main.c
 
 examples: compiler
 	@echo "Compiling examples..."
-	$(BUILD_DIR)/forge compile --no-wasm -o examples/01-counter/dist \
+	$(BUILD_DIR)/forge compile --no-wasm --prerender -o examples/01-counter/dist \
 	    examples/01-counter/Counter.cx examples/01-counter/App.cx
-	$(BUILD_DIR)/forge compile --no-wasm -o examples/02-todo-app/dist \
+	$(BUILD_DIR)/forge compile --no-wasm --prerender -o examples/02-todo-app/dist \
 	    examples/02-todo-app/TodoItem.cx examples/02-todo-app/App.cx
-	$(BUILD_DIR)/forge compile --no-wasm -o examples/03-dashboard/dist \
+	$(BUILD_DIR)/forge compile --no-wasm --prerender -o examples/03-dashboard/dist \
 	    examples/03-dashboard/Card.cx examples/03-dashboard/App.cx
-	$(BUILD_DIR)/forge compile --no-wasm -o examples/04-property-site/dist \
-	    examples/04-property-site/PropertyCard.cx examples/04-property-site/ContactForm.cx \
+	$(BUILD_DIR)/forge compile --no-wasm --prerender -o examples/04-property-site/dist \
+	    examples/04-property-site/PropertyCard.cx examples/04-property-site/PropertyDetail.cx \
+	    examples/04-property-site/ContactForm.cx \
 	    examples/04-property-site/App.cx
 	@echo "  \033[32m✓\033[0m All examples compiled"
 

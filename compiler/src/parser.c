@@ -359,8 +359,12 @@ static HtmlNode *parse_element(Parser *p, const char *tag) {
   HtmlNode *node = ast_new_html_node(HTML_ELEMENT);
   node->tag = strdup(tag);
 
-  /* Check if it's a component (starts with uppercase) */
-  if (tag[0] >= 'A' && tag[0] <= 'Z')
+  /* Check if it's a special tag or component */
+  if (strcmp(tag, "if") == 0)
+    node->kind = HTML_IF;
+  else if (strcmp(tag, "for") == 0)
+    node->kind = HTML_FOR;
+  else if (tag[0] >= 'A' && tag[0] <= 'Z')
     node->kind = HTML_COMPONENT;
 
   /* Parse attributes */

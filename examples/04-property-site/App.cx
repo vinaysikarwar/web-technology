@@ -1,15 +1,8 @@
 /*
  * Forge Example 04 — Property Website App
- *
- * Demonstrates:
- *   - Full multi-section page layout
- *   - Component composition (PropertyCard, ContactForm)
- *   - State-driven filtering
- *   - Hero section with call to action
- *   - Navigation with active section tracking
  */
 
-#include <forge/web.h>
+#include "PropertyDetail.cx"
 #include "PropertyCard.cx"
 #include "ContactForm.cx"
 
@@ -17,167 +10,154 @@
 
     @state {
         int filter;           /* 0=all, 1=sale, 2=rent */
+        int page;             /* 0=home, 1=details */
+        int selected_id;      /* id of property to show */
+        char *properties;      /* JSON string or Array reference in JS */
     }
 
     @style {
-        min-height:  100vh;
-        background:  #f0f4f8;
-        font-family: system-ui, -apple-system, sans-serif;
-        padding:     0;
+        min-height: 100vh;
+        background: #f8fafc;
+        padding-bottom: 0;
     }
 
-    @on(set_filter_all) {
-        state.filter = 0;
+    @on(set_filter_all) { state.filter = 0; }
+    @on(set_filter_sale) { state.filter = 1; }
+    @on(set_filter_rent) { state.filter = 2; }
+
+    @on(show_details) {
+        state.page = 1;
     }
 
-    @on(set_filter_sale) {
-        state.filter = 1;
-    }
-
-    @on(set_filter_rent) {
-        state.filter = 2;
+    @on(show_home) {
+        state.page = 0;
+        window.location.hash = "";
     }
 
     @template {
         <div class="property-app">
+            <style>
+                .navbar { background: #fff; border-bottom: 1px solid #e2e8f0; sticky: top; z-index: 50; padding: 1rem 0; }
+                .nav-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 1.5rem; }
+                .nav-brand { display: flex; align-items: center; gap: 0.5rem; cursor: pointer; }
+                .nav-logo { font-size: 1.5rem; }
+                .nav-title { font-weight: 800; font-size: 1.25rem; color: #0f172a; }
+                .nav-links { display: flex; gap: 2rem; }
+                .nav-link { text-decoration: none; color: #64748b; font-weight: 500; transition: color 0.2s; }
+                .nav-link.active { color: #6366f1; border-bottom: 2px solid #6366f1; }
+                
+                .hero { padding: 5rem 1.5rem; background: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%); text-align: center; }
+                .hero-content { max-width: 800px; margin: 0 auto; }
+                .hero-badge { display: inline-block; padding: 0.5rem 1rem; background: #fff; border-radius: 99px; color: #6366f1; font-weight: 600; font-size: 0.875rem; margin-bottom: 1.5rem; box-shadow: 0 2px 10px rgba(99,102,241,0.1); }
+                .hero-title { font-size: 3.5rem; font-weight: 800; color: #0f172a; margin-bottom: 1.5rem; line-height: 1.1; }
+                .hero-subtitle { font-size: 1.25rem; color: #64748b; line-height: 1.6; }
+                
+                .properties-section { padding: 4rem 1.5rem; max-width: 1200px; margin: 0 auto; }
+                .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 3rem; }
+                .section-title { font-size: 2rem; font-weight: 700; color: #0f172a; }
+                .filter-bar { display: flex; gap: 0.5rem; background: #f1f5f9; padding: 0.375rem; border-radius: 12px; }
+                .filter-btn { padding: 0.5rem 1.5rem; border: none; background: transparent; border-radius: 8px; font-weight: 600; color: #64748b; cursor: pointer; transition: all 0.2s; }
+                .filter-btn.active { background: #fff; color: #0f172a; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+                
+                .property-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(350px, 1fr)); gap: 2rem; }
+                
+                .detail-section { padding: 3rem 1.5rem; max-width: 1200px; margin: 0 auto; animation: fadeIn 0.4s ease; }
+                .detail-nav { margin-bottom: 2rem; }
+                .back-link { border: none; background: #fff; padding: 0.5rem 1rem; border-radius: 8px; color: #6366f1; font-weight: 600; cursor: pointer; border: 1px solid #e2e8f0; }
+                
+                .contact-section { background: #0f172a; color: #fff; padding: 5rem 1.5rem; }
+                .contact-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+                .contact-heading { font-size: 2.5rem; font-weight: 800; margin-bottom: 2rem; }
+                
+                .site-footer { padding: 4rem 0; border-top: 1px solid #e2e8f0; text-align: center; background: #fff; }
+                
+                @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+            </style>
+            
             <nav class="navbar">
                 <div class="nav-inner">
-                    <div class="nav-brand">
+                    <div class="nav-brand" onclick={@show_home}>
                         <span class="nav-logo">🏡</span>
                         <span class="nav-title">ForgeEstates</span>
                     </div>
                     <div class="nav-links">
-                        <a class="nav-link active" href="#properties">Properties</a>
+                        <a class={state.page == 0 ? "nav-link active" : "nav-link"} href="#" onclick={@show_home}>Properties</a>
                         <a class="nav-link" href="#contact">Contact</a>
                     </div>
                 </div>
             </nav>
 
-            <section class="hero">
-                <div class="hero-content">
-                    <span class="hero-badge">⚡ Powered by Forge WASM</span>
-                    <h1 class="hero-title">Find Your Dream Home</h1>
-                    <p class="hero-subtitle">
-                        Discover luxury properties crafted for modern living. Browse our curated collection of homes, apartments, and premium estates.
-                    </p>
-                    <div class="hero-stats">
-                        <div class="stat-item">
-                            <span class="stat-value">150+</span>
-                            <span class="stat-label">Properties</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-value">50+</span>
-                            <span class="stat-label">Cities</span>
-                        </div>
-                        <div class="stat-item">
-                            <span class="stat-value">1200+</span>
-                            <span class="stat-label">Happy Clients</span>
+            <if condition={state.page == 0}>
+                <section class="hero">
+                    <div class="hero-content">
+                        <span class="hero-badge">⚡ Powered by Forge WASM</span>
+                        <h1 class="hero-title">Find Your Dream Home</h1>
+                        <p class="hero-subtitle">
+                            Discover luxury properties crafted for modern living. Browse our curated collection of homes, apartments, and premium estates.
+                        </p>
+                    </div>
+                </section>
+
+                <section class="properties-section" id="properties">
+                    <div class="section-header">
+                        <h2 class="section-title">Featured Properties</h2>
+                        <div class="filter-bar">
+                            <button class={state.filter == 0 ? "filter-btn active" : "filter-btn"} onclick={@set_filter_all}>All</button>
+                            <button class={state.filter == 1 ? "filter-btn active" : "filter-btn"} onclick={@set_filter_sale}>For Sale</button>
+                            <button class={state.filter == 2 ? "filter-btn active" : "filter-btn"} onclick={@set_filter_rent}>For Rent</button>
                         </div>
                     </div>
-                </div>
-            </section>
 
-            <section class="properties-section" id="properties">
-                <div class="section-header">
-                    <h2 class="section-title">Featured Properties</h2>
-                    <p class="section-subtitle">Handpicked properties for you</p>
-                    <div class="filter-bar">
-                        <button
-                            class={state.filter == 0 ? "filter-btn active" : "filter-btn"}
-                            onclick={@set_filter_all}>All</button>
-                        <button
-                            class={state.filter == 1 ? "filter-btn active" : "filter-btn"}
-                            onclick={@set_filter_sale}>For Sale</button>
-                        <button
-                            class={state.filter == 2 ? "filter-btn active" : "filter-btn"}
-                            onclick={@set_filter_rent}>For Rent</button>
+                    <div class="property-grid">
+                        <for each={state.properties} as={p}>
+                            <if condition={state.filter == 0 || (state.filter == 1 && p.type == "sale") || (state.filter == 2 && p.type == "rent")}>
+                                <div onclick={() => { state.selected_id = p.id; @show_details(); }}>
+                                    <PropertyCard
+                                        title={p.title}
+                                        location={p.location}
+                                        price={p.price}
+                                        bedrooms={p.bedrooms}
+                                        bathrooms={p.bathrooms}
+                                        area={p.area}
+                                        type={p.type}
+                                    />
+                                </div>
+                            </if>
+                        </for>
                     </div>
-                </div>
+                </section>
+            </if>
 
-                <div class="property-grid">
-                    <PropertyCard
-                        title="Modern Villa with Pool"
-                        location="Beverly Hills, CA"
-                        price={2450000}
-                        bedrooms={5}
-                        bathrooms={4}
-                        area={4200}
-                        type="sale"
-                        featured={1}
-                    />
-                    <PropertyCard
-                        title="Downtown Luxury Penthouse"
-                        location="Manhattan, NY"
-                        price={8500}
-                        bedrooms={3}
-                        bathrooms={2}
-                        area={2100}
-                        type="rent"
-                        featured={0}
-                    />
-                    <PropertyCard
-                        title="Cozy Suburban Family Home"
-                        location="Austin, TX"
-                        price={485000}
-                        bedrooms={4}
-                        bathrooms={3}
-                        area={2800}
-                        type="sale"
-                        featured={0}
-                    />
-                    <PropertyCard
-                        title="Beachfront Studio Apartment"
-                        location="Miami, FL"
-                        price={3200}
-                        bedrooms={1}
-                        bathrooms={1}
-                        area={650}
-                        type="rent"
-                        featured={1}
-                    />
-                    <PropertyCard
-                        title="Mountain Retreat Cabin"
-                        location="Aspen, CO"
-                        price={1200000}
-                        bedrooms={3}
-                        bathrooms={2}
-                        area={1800}
-                        type="sale"
-                        featured={0}
-                    />
-                    <PropertyCard
-                        title="Urban Loft with City Views"
-                        location="Chicago, IL"
-                        price={4200}
-                        bedrooms={2}
-                        bathrooms={1}
-                        area={1200}
-                        type="rent"
-                        featured={0}
-                    />
-                </div>
-            </section>
+            <if condition={state.page == 1}>
+                <section class="detail-section">
+                    <for each={state.properties} as={p}>
+                        <if condition={state.selected_id == p.id}>
+                            <div class="detail-container">
+                                <header class="detail-nav">
+                                    <button class="back-link" onclick={@show_home}>← Back to Listings</button>
+                                </header>
+                                <PropertyDetail
+                                    title={p.title}
+                                    location={p.location}
+                                    price={p.price}
+                                    bedrooms={p.bedrooms}
+                                    bathrooms={p.bathrooms}
+                                    area={p.area}
+                                    type={p.type}
+                                    description={p.description}
+                                />
+                            </div>
+                        </if>
+                    </for>
+                </section>
+            </if>
 
             <section class="contact-section" id="contact">
                 <div class="contact-inner">
                     <div class="contact-info">
                         <h2 class="contact-heading">Ready to Move In?</h2>
-                        <p class="contact-desc">
-                            Whether you are looking to buy or rent, our team of experienced agents is here to help you find the perfect property. Get in touch today!
-                        </p>
                         <div class="contact-details">
-                            <div class="contact-detail-item">
-                                <span class="detail-icon">📞</span>
-                                <span>+1 (555) 234-5678</span>
-                            </div>
-                            <div class="contact-detail-item">
-                                <span class="detail-icon">✉️</span>
-                                <span>hello@forgeestates.com</span>
-                            </div>
-                            <div class="contact-detail-item">
-                                <span class="detail-icon">📍</span>
-                                <span>100 Forge Avenue, San Francisco, CA 94105</span>
-                            </div>
+                            <div class="contact-detail-item"><span>📞 +1 (555) 234-5678</span></div>
                         </div>
                     </div>
                     <div class="contact-form-wrap">
@@ -188,13 +168,8 @@
 
             <footer class="site-footer">
                 <div class="footer-inner">
-                    <div class="footer-brand">
-                        <span class="footer-logo">🏡</span>
-                        <span class="footer-title">ForgeEstates</span>
-                    </div>
-                    <p class="footer-copy">
-                        Built with Forge Framework — C → WebAssembly. Zero JavaScript runtime overhead.
-                    </p>
+                    <span class="footer-title">ForgeEstates</span>
+                    <p class="footer-copy">Built with Forge Framework</p>
                 </div>
             </footer>
         </div>
