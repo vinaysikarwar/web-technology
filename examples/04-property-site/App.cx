@@ -1,0 +1,202 @@
+/*
+ * Forge Example 04 — Property Website App
+ *
+ * Demonstrates:
+ *   - Full multi-section page layout
+ *   - Component composition (PropertyCard, ContactForm)
+ *   - State-driven filtering
+ *   - Hero section with call to action
+ *   - Navigation with active section tracking
+ */
+
+#include <forge/web.h>
+#include "PropertyCard.cx"
+#include "ContactForm.cx"
+
+@component App {
+
+    @state {
+        int filter;           /* 0=all, 1=sale, 2=rent */
+    }
+
+    @style {
+        min-height:  100vh;
+        background:  #f0f4f8;
+        font-family: system-ui, -apple-system, sans-serif;
+        padding:     0;
+    }
+
+    @on(set_filter_all) {
+        state.filter = 0;
+    }
+
+    @on(set_filter_sale) {
+        state.filter = 1;
+    }
+
+    @on(set_filter_rent) {
+        state.filter = 2;
+    }
+
+    @template {
+        <div class="property-app">
+            <nav class="navbar">
+                <div class="nav-inner">
+                    <div class="nav-brand">
+                        <span class="nav-logo">🏡</span>
+                        <span class="nav-title">ForgeEstates</span>
+                    </div>
+                    <div class="nav-links">
+                        <a class="nav-link active" href="#properties">Properties</a>
+                        <a class="nav-link" href="#contact">Contact</a>
+                    </div>
+                </div>
+            </nav>
+
+            <section class="hero">
+                <div class="hero-content">
+                    <span class="hero-badge">⚡ Powered by Forge WASM</span>
+                    <h1 class="hero-title">Find Your Dream Home</h1>
+                    <p class="hero-subtitle">
+                        Discover luxury properties crafted for modern living. Browse our curated collection of homes, apartments, and premium estates.
+                    </p>
+                    <div class="hero-stats">
+                        <div class="stat-item">
+                            <span class="stat-value">150+</span>
+                            <span class="stat-label">Properties</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">50+</span>
+                            <span class="stat-label">Cities</span>
+                        </div>
+                        <div class="stat-item">
+                            <span class="stat-value">1200+</span>
+                            <span class="stat-label">Happy Clients</span>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section class="properties-section" id="properties">
+                <div class="section-header">
+                    <h2 class="section-title">Featured Properties</h2>
+                    <p class="section-subtitle">Handpicked properties for you</p>
+                    <div class="filter-bar">
+                        <button
+                            class={state.filter == 0 ? "filter-btn active" : "filter-btn"}
+                            onclick={@set_filter_all}>All</button>
+                        <button
+                            class={state.filter == 1 ? "filter-btn active" : "filter-btn"}
+                            onclick={@set_filter_sale}>For Sale</button>
+                        <button
+                            class={state.filter == 2 ? "filter-btn active" : "filter-btn"}
+                            onclick={@set_filter_rent}>For Rent</button>
+                    </div>
+                </div>
+
+                <div class="property-grid">
+                    <PropertyCard
+                        title="Modern Villa with Pool"
+                        location="Beverly Hills, CA"
+                        price={2450000}
+                        bedrooms={5}
+                        bathrooms={4}
+                        area={4200}
+                        type="sale"
+                        featured={1}
+                    />
+                    <PropertyCard
+                        title="Downtown Luxury Penthouse"
+                        location="Manhattan, NY"
+                        price={8500}
+                        bedrooms={3}
+                        bathrooms={2}
+                        area={2100}
+                        type="rent"
+                        featured={0}
+                    />
+                    <PropertyCard
+                        title="Cozy Suburban Family Home"
+                        location="Austin, TX"
+                        price={485000}
+                        bedrooms={4}
+                        bathrooms={3}
+                        area={2800}
+                        type="sale"
+                        featured={0}
+                    />
+                    <PropertyCard
+                        title="Beachfront Studio Apartment"
+                        location="Miami, FL"
+                        price={3200}
+                        bedrooms={1}
+                        bathrooms={1}
+                        area={650}
+                        type="rent"
+                        featured={1}
+                    />
+                    <PropertyCard
+                        title="Mountain Retreat Cabin"
+                        location="Aspen, CO"
+                        price={1200000}
+                        bedrooms={3}
+                        bathrooms={2}
+                        area={1800}
+                        type="sale"
+                        featured={0}
+                    />
+                    <PropertyCard
+                        title="Urban Loft with City Views"
+                        location="Chicago, IL"
+                        price={4200}
+                        bedrooms={2}
+                        bathrooms={1}
+                        area={1200}
+                        type="rent"
+                        featured={0}
+                    />
+                </div>
+            </section>
+
+            <section class="contact-section" id="contact">
+                <div class="contact-inner">
+                    <div class="contact-info">
+                        <h2 class="contact-heading">Ready to Move In?</h2>
+                        <p class="contact-desc">
+                            Whether you are looking to buy or rent, our team of experienced agents is here to help you find the perfect property. Get in touch today!
+                        </p>
+                        <div class="contact-details">
+                            <div class="contact-detail-item">
+                                <span class="detail-icon">📞</span>
+                                <span>+1 (555) 234-5678</span>
+                            </div>
+                            <div class="contact-detail-item">
+                                <span class="detail-icon">✉️</span>
+                                <span>hello@forgeestates.com</span>
+                            </div>
+                            <div class="contact-detail-item">
+                                <span class="detail-icon">📍</span>
+                                <span>100 Forge Avenue, San Francisco, CA 94105</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="contact-form-wrap">
+                        <ContactForm property_title="General Inquiry" />
+                    </div>
+                </div>
+            </section>
+
+            <footer class="site-footer">
+                <div class="footer-inner">
+                    <div class="footer-brand">
+                        <span class="footer-logo">🏡</span>
+                        <span class="footer-title">ForgeEstates</span>
+                    </div>
+                    <p class="footer-copy">
+                        Built with Forge Framework — C → WebAssembly. Zero JavaScript runtime overhead.
+                    </p>
+                </div>
+            </footer>
+        </div>
+    }
+}

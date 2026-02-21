@@ -1,0 +1,71 @@
+/*
+ * Forge Example 04 — PropertyCard Component
+ * A reusable property listing card with details and badge.
+ *
+ * Demonstrates:
+ *   - Rich @props with multiple types
+ *   - @computed for formatted display values
+ *   - Dynamic @style bindings
+ *   - Conditional badge rendering
+ */
+
+#include <forge/web.h>
+
+@component PropertyCard {
+
+    @props {
+        char  *title;
+        char  *location;
+        int    price;
+        int    bedrooms;
+        int    bathrooms;
+        int    area;
+        char  *type;          /* "sale" or "rent" */
+        int    featured;      /* 1 = highlighted card */
+    }
+
+    @computed {
+        char *price_str  = forge_sprintf("$%d", props.price);
+        char *bed_str    = forge_sprintf("%d Beds", props.bedrooms);
+        char *bath_str   = forge_sprintf("%d Baths", props.bathrooms);
+        char *area_str   = forge_sprintf("%d sq ft", props.area);
+        char *badge_text = props.type ? props.type : "sale";
+    }
+
+    @style {
+        background:    #ffffff;
+        border-radius: 16px;
+        overflow:      hidden;
+        box-shadow:    0 2px 16px rgba(0,0,0,0.06);
+        border:        1px solid {props.featured ? "#6366f1" : "#e2e8f0"};
+        transition:    transform 0.25s ease, box-shadow 0.25s ease;
+        cursor:        pointer;
+    }
+
+    @on(card_click) {
+        /* Could emit a custom event to parent for detail view */
+    }
+
+    @template {
+        <div class="property-card" onclick={@card_click}>
+            <div class="property-image-wrap">
+                <div class="property-image-placeholder">
+                    🏠
+                </div>
+                <span class={props.type == "rent" ? "property-badge rent" : "property-badge sale"}>
+                    {computed.badge_text}
+                </span>
+            </div>
+            <div class="property-info">
+                <h3 class="property-title">{props.title}</h3>
+                <p class="property-location">📍 {props.location}</p>
+                <div class="property-price">{computed.price_str}</div>
+                <div class="property-details">
+                    <span class="detail-item">🛏 {computed.bed_str}</span>
+                    <span class="detail-item">🚿 {computed.bath_str}</span>
+                    <span class="detail-item">📐 {computed.area_str}</span>
+                </div>
+            </div>
+        </div>
+    }
+}

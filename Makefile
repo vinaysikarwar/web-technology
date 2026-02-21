@@ -106,6 +106,9 @@ examples: compiler
 	    examples/02-todo-app/TodoItem.cx examples/02-todo-app/App.cx
 	$(BUILD_DIR)/forge compile --no-wasm -o examples/03-dashboard/dist \
 	    examples/03-dashboard/Card.cx examples/03-dashboard/App.cx
+	$(BUILD_DIR)/forge compile --no-wasm -o examples/04-property-site/dist \
+	    examples/04-property-site/PropertyCard.cx examples/04-property-site/ContactForm.cx \
+	    examples/04-property-site/App.cx
 	@echo "  \033[32m✓\033[0m All examples compiled"
 
 # ─── Tests ────────────────────────────────────────────────────────────────────

@@ -145,7 +145,16 @@ static TokenType ident_type(const char *start, size_t len, int after_at) {
                 default: break;
                 }
             } else {
-                return KEYWORDS[i].type;
+                /* Forge directive keywords (state, props, etc.) should only
+                 * be returned as TOK_AT_* when preceded by '@'.  Without '@',
+                 * treat them as regular identifiers so that expressions like
+                 * state.count or props.step work correctly in templates. */
+                switch (KEYWORDS[i].type) {
+                case TOK_AT_COMPONENT: case TOK_AT_PROPS:  case TOK_AT_STATE:
+                case TOK_AT_STYLE:    case TOK_AT_TEMPLATE: case TOK_AT_ON:
+                case TOK_AT_COMPUTED: return TOK_IDENT;
+                default: return KEYWORDS[i].type;
+                }
             }
         }
     }
@@ -259,7 +268,6 @@ static Token lex_template(Lexer *lex) {
     }
     if (c == '<') {
         advance(lex);
-        if (peek_char(lex) == '/') { advance(lex); }
         return make_token(lex, TOK_LT, start);
     }
     if (c == '>') {
@@ -275,6 +283,26 @@ static Token lex_template(Lexer *lex) {
         return make_token(lex, TOK_ASSIGN, start);
     }
 
+    /* Quoted attribute value "..." — read until closing quote */
+    if (c == '"') {
+        advance(lex); /* opening " */
+        while (peek_char(lex) && peek_char(lex) != '"') {
+            if (peek_char(lex) == '\\') advance(lex); /* escape */
+            if (peek_char(lex)) advance(lex);
+        }
+        if (peek_char(lex) == '"') advance(lex); /* closing " */
+        return make_token(lex, TOK_HTML_ATTR, start);
+    }
+    if (c == '\'') {
+        advance(lex); /* opening ' */
+        while (peek_char(lex) && peek_char(lex) != '\'') {
+            if (peek_char(lex) == '\\') advance(lex);
+            if (peek_char(lex)) advance(lex);
+        }
+        if (peek_char(lex) == '\'') advance(lex); /* closing ' */
+        return make_token(lex, TOK_HTML_ATTR, start);
+    }
+
     /* Tag names and attribute names */
     if (isalpha(c) || c == '_' || c == '-') {
         while (isalnum(peek_char(lex)) || peek_char(lex) == '_' || peek_char(lex) == '-')
@@ -282,7 +310,7 @@ static Token lex_template(Lexer *lex) {
         return make_token(lex, TOK_IDENT, start);
     }
 
-    /* Plain text between tags */
+    /* Plain text between tags (stops at structural delimiters) */
     return lex_template_text(lex);
 }
 
@@ -390,19 +418,14 @@ Token lexer_next(Lexer *lex) {
         return make_token(lex, TOK_HASH, start);
     }
 
-    /* Forge directive */
+    /* Forge directive — just return the token type.
+     * Mode switching is handled explicitly by the parser AFTER it has consumed
+     * the opening '{', so the lexer never reads that '{' in the wrong mode. */
     if (c == '@') {
         const char *ident_start = lex->current;
         while (isalnum(peek_char(lex)) || peek_char(lex) == '_') advance(lex);
         size_t len = (size_t)(lex->current - ident_start);
         TokenType t = ident_type(ident_start, len, 1);
-        if (t == TOK_AT_TEMPLATE) {
-            lex->mode = LEX_MODE_TEMPLATE;
-            lex->template_depth = 0;
-        }
-        if (t == TOK_AT_STYLE) {
-            lex->mode = LEX_MODE_STYLE;
-        }
         return make_token(lex, t, start);
     }
 
