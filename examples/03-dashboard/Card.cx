@@ -1,0 +1,51 @@
+/*
+ * Forge Example 03 — Dashboard Card Component
+ * A reusable metric card with trend indicator.
+ */
+
+#include <forge/web.h>
+
+@component Card {
+
+    @props {
+        char  *title;
+        char  *value;
+        char  *unit;
+        float  change;      /* % change from previous period, positive = up */
+        char  *icon;        /* emoji or unicode icon */
+        int    loading;     /* 1 = show skeleton */
+    }
+
+    @computed {
+        int    trend_up   = props.change >= 0;
+        char  *trend_sign = props.change >= 0 ? "↑" : "↓";
+        char  *trend_str  = forge_sprintf("%s %.1f%%", computed.trend_sign, props.change < 0 ? -props.change : props.change);
+    }
+
+    @style {
+        background:    white;
+        border-radius: 16px;
+        padding:       24px;
+        box-shadow:    0 1px 4px rgba(0,0,0,0.06);
+        border:        1px solid #e2e8f0;
+        transition:    transform 0.2s, box-shadow 0.2s;
+        cursor:        default;
+    }
+
+    @template {
+        <div class={props.loading ? "card-inner loading" : "card-inner"}>
+            <div class="card-header">
+                <div class="card-icon">{props.icon}</div>
+                <span class="card-title">{props.title}</span>
+            </div>
+            <div class="card-value">
+                {props.value}
+                <span class="card-unit">{props.unit}</span>
+            </div>
+            <div class={computed.trend_up ? "card-trend up" : "card-trend down"}>
+                {computed.trend_str}
+                <span class="card-trend-label"> vs last period</span>
+            </div>
+        </div>
+    }
+}

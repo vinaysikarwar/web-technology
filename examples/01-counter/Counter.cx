@@ -1,0 +1,99 @@
+/*
+ * Forge Example 01 — Counter Component
+ *
+ * Demonstrates:
+ *   - @state with initialization
+ *   - @on event handlers
+ *   - @computed derived values
+ *   - @style with dynamic values
+ *   - @template with expressions
+ */
+
+#include <forge/web.h>
+
+@component Counter {
+
+    @props {
+        int   step;          /* how much to increment per click, default 1 */
+        int   max;           /* upper limit, 0 = unlimited                  */
+        char *label;         /* display label                               */
+    }
+
+    @state {
+        int count     = 0;
+        int is_maxed  = 0;   /* 1 when count >= max */
+    }
+
+    @computed {
+        char *display_count = forge_sprintf("%d", state.count);
+        int   step_val      = props.step > 0 ? props.step : 1;
+    }
+
+    @style {
+        display:        flex;
+        flex-direction: column;
+        align-items:    center;
+        gap:            12px;
+        padding:        24px;
+        border-radius:  12px;
+        background:     #f8f9fa;
+        border:         2px solid {state.is_maxed ? "#e74c3c" : "#dee2e6"};
+    }
+
+    @on(increment) {
+        int step = props.step > 0 ? props.step : 1;
+        if (props.max > 0 && state.count + step > props.max) {
+            state.count   = props.max;
+            state.is_maxed = 1;
+        } else {
+            state.count  += step;
+            state.is_maxed = 0;
+        }
+    }
+
+    @on(decrement) {
+        int step = props.step > 0 ? props.step : 1;
+        state.count -= step;
+        if (state.count < 0) state.count = 0;
+        state.is_maxed = 0;
+    }
+
+    @on(reset) {
+        state.count    = 0;
+        state.is_maxed = 0;
+    }
+
+    @template {
+        <div class="counter-wrapper">
+            <h2 class="counter-label">{props.label}</h2>
+
+            <div class="counter-display">
+                {computed.display_count}
+            </div>
+
+            <div class="counter-buttons">
+                <button
+                    class="btn btn-secondary"
+                    onclick={@decrement}
+                    disabled={state.count == 0 ? "true" : "false"}>
+                    −
+                </button>
+
+                <button
+                    class="btn btn-primary"
+                    onclick={@increment}
+                    disabled={state.is_maxed ? "true" : "false"}>
+                    +{computed.step_val}
+                </button>
+            </div>
+
+            <button class="btn btn-link" onclick={@reset}>
+                Reset
+            </button>
+
+            <p class="counter-status">
+                {state.is_maxed ? "Maximum reached!" : ""}
+            </p>
+        </div>
+    }
+}

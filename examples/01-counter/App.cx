@@ -1,0 +1,53 @@
+/*
+ * Forge Example 01 — App (Root Component)
+ * Demonstrates component composition with Counter.
+ */
+
+#include <forge/web.h>
+#include "Counter.cx"
+
+@component App {
+
+    @state {
+        int theme_dark = 0;
+    }
+
+    @style {
+        min-height:  100vh;
+        display:     flex;
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        background:  {state.theme_dark ? "#1a1a2e" : "#ffffff"};
+        color:       {state.theme_dark ? "#eee" : "#111"};
+        font-family: system-ui, sans-serif;
+        transition:  background 0.3s;
+    }
+
+    @on(toggle_theme) {
+        state.theme_dark = !state.theme_dark;
+    }
+
+    @template {
+        <main class="app">
+            <h1>Forge Counter Demo</h1>
+            <p>Built with Forge — compiled C → WebAssembly</p>
+
+            <Counter
+                label="Basic Counter"
+                step={1}
+                max={0}
+            />
+
+            <Counter
+                label="Step-5 Counter (max 50)"
+                step={5}
+                max={50}
+            />
+
+            <button class="theme-toggle" onclick={@toggle_theme}>
+                {state.theme_dark ? "☀ Light Mode" : "☾ Dark Mode"}
+            </button>
+        </main>
+    }
+}

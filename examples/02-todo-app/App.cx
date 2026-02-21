@@ -1,0 +1,155 @@
+/*
+ * Forge Example 02 — Todo App
+ *
+ * Demonstrates:
+ *   - Dynamic lists
+ *   - Input handling
+ *   - Component communication via callback props
+ *   - @computed derived state
+ */
+
+#include <forge/web.h>
+#include "TodoItem.cx"
+
+#define MAX_TODOS 256
+#define MAX_TEXT  128
+
+typedef struct {
+    int  id;
+    char text[MAX_TEXT];
+    int  done;
+} Todo;
+
+@component App {
+
+    @state {
+        Todo todos[MAX_TODOS];
+        int  todo_count  = 0;
+        int  next_id     = 1;
+        char input[MAX_TEXT];
+        int  filter;       /* 0=all, 1=active, 2=done */
+    }
+
+    @computed {
+        int active_count = 0;
+        int done_count   = 0;
+        /* counts computed in handler after any change */
+    }
+
+    @style {
+        max-width:   520px;
+        margin:      40px auto;
+        font-family: system-ui, sans-serif;
+        background:  #ffffff;
+        border-radius: 12px;
+        box-shadow:  0 4px 24px rgba(0,0,0,0.08);
+        overflow:    hidden;
+    }
+
+    @on(add_todo) {
+        if (state.input[0] == '\0') return;
+
+        int i = state.todo_count;
+        if (i >= MAX_TODOS) return;
+
+        state.todos[i].id   = state.next_id++;
+        state.todos[i].done = 0;
+        /* copy input text */
+        int j = 0;
+        while (state.input[j] && j < MAX_TEXT - 1) {
+            state.todos[i].text[j] = state.input[j];
+            j++;
+        }
+        state.todos[i].text[j] = '\0';
+        state.todo_count++;
+
+        /* clear input */
+        state.input[0] = '\0';
+    }
+
+    @on(toggle_todo) {
+        /* find the todo by id (passed via event data) */
+        for (int i = 0; i < state.todo_count; i++) {
+            if (state.todos[i].id == event->int_data) {
+                state.todos[i].done = !state.todos[i].done;
+                break;
+            }
+        }
+    }
+
+    @on(delete_todo) {
+        for (int i = 0; i < state.todo_count; i++) {
+            if (state.todos[i].id == event->int_data) {
+                /* shift remaining todos down */
+                for (int j = i; j < state.todo_count - 1; j++) {
+                    state.todos[j] = state.todos[j + 1];
+                }
+                state.todo_count--;
+                break;
+            }
+        }
+    }
+
+    @on(clear_done) {
+        int new_count = 0;
+        for (int i = 0; i < state.todo_count; i++) {
+            if (!state.todos[i].done) {
+                state.todos[new_count++] = state.todos[i];
+            }
+        }
+        state.todo_count = new_count;
+    }
+
+    @on(set_filter) {
+        state.filter = event->int_data;
+    }
+
+    @template {
+        <div class="todo-app">
+            <header class="todo-header">
+                <h1>Forge Todos</h1>
+                <span class="todo-badge">WASM Powered</span>
+            </header>
+
+            <div class="todo-input-row">
+                <input
+                    type="text"
+                    class="todo-input"
+                    placeholder="What needs to be done?"
+                    value={state.input}
+                    oninput={state.input = event.value}
+                    onkeydown={if (event.key == 13) @add_todo()}
+                />
+                <button class="btn-add" onclick={@add_todo}>
+                    Add
+                </button>
+            </div>
+
+            <ul class="todo-list">
+                {/* Items rendered by runtime via list reconciliation */}
+            </ul>
+
+            <footer class="todo-footer">
+                <span class="todo-count">
+                    {computed.active_count} item{computed.active_count == 1 ? "" : "s"} left
+                </span>
+
+                <div class="todo-filters">
+                    <button
+                        class={state.filter == 0 ? "filter active" : "filter"}
+                        onclick={state.filter = 0}>All</button>
+                    <button
+                        class={state.filter == 1 ? "filter active" : "filter"}
+                        onclick={state.filter = 1}>Active</button>
+                    <button
+                        class={state.filter == 2 ? "filter active" : "filter"}
+                        onclick={state.filter = 2}>Done</button>
+                </div>
+
+                <button class="btn-clear" onclick={@clear_done}>
+                    Clear done
+                </button>
+            </footer>
+        </div>
+    }
+}

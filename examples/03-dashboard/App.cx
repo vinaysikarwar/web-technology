@@ -1,0 +1,124 @@
+/*
+ * Forge Example 03 — Analytics Dashboard
+ *
+ * Demonstrates:
+ *   - forge_http_get (async data fetching)
+ *   - Multiple composed components
+ *   - Loading states
+ *   - Auto-refresh via forge_tween
+ */
+
+#include <forge/web.h>
+#include <forge/http.h>
+#include <forge/animate.h>
+#include "Card.cx"
+
+typedef struct {
+    float  users;
+    float  revenue;
+    float  conversions;
+    float  pageviews;
+    float  user_change;
+    float  revenue_change;
+    float  conv_change;
+    float  pv_change;
+} DashboardData;
+
+@component App {
+
+    @state {
+        DashboardData data;
+        int  loading   = 1;
+        int  error     = 0;
+        int  refresh   = 0;   /* auto-refresh counter */
+    }
+
+    @computed {
+        char *users_str = forge_sprintf("%.0f", state.data.users);
+        char *rev_str   = forge_sprintf("$%.2fk", state.data.revenue / 1000.0f);
+        char *conv_str  = forge_sprintf("%.1f%%", state.data.conversions);
+        char *pv_str    = forge_sprintf("%.1fM", state.data.pageviews / 1000000.0f);
+    }
+
+    @style {
+        background:  #f8fafc;
+        min-height:  100vh;
+        font-family: system-ui, sans-serif;
+        padding:     0;
+    }
+
+    @on(data_loaded) {
+        /* Called by HTTP callback — data already written into state.data */
+        state.loading = 0;
+        state.error   = 0;
+    }
+
+    @on(data_error) {
+        state.loading = 0;
+        state.error   = 1;
+    }
+
+    @on(refresh) {
+        state.loading = 1;
+        state.refresh++;
+        /* HTTP fetch is initiated by mounted lifecycle outside @on */
+    }
+
+    @template {
+        <div class="dashboard">
+            <header class="dash-header">
+                <div class="dash-brand">
+                    <span class="dash-logo">⚡</span>
+                    <h1>Forge Analytics</h1>
+                </div>
+                <div class="dash-controls">
+                    <span class="dash-badge">Live — WASM</span>
+                    <button class="dash-refresh" onclick={@refresh}>
+                        ↻ Refresh
+                    </button>
+                </div>
+            </header>
+
+            <main class="dash-content">
+                <section class="dash-cards">
+                    <Card
+                        title="Total Users"
+                        value={computed.users_str}
+                        unit="users"
+                        change={state.data.user_change}
+                        icon="👥"
+                        loading={state.loading}
+                    />
+                    <Card
+                        title="Revenue"
+                        value={computed.rev_str}
+                        unit=""
+                        change={state.data.revenue_change}
+                        icon="💰"
+                        loading={state.loading}
+                    />
+                    <Card
+                        title="Conversion Rate"
+                        value={computed.conv_str}
+                        unit=""
+                        change={state.data.conv_change}
+                        icon="📈"
+                        loading={state.loading}
+                    />
+                    <Card
+                        title="Page Views"
+                        value={computed.pv_str}
+                        unit=""
+                        change={state.data.pv_change}
+                        icon="👁"
+                        loading={state.loading}
+                    />
+                </section>
+
+                <section class="dash-error">
+                    {state.error ? "Failed to load data. Check your connection." : ""}
+                </section>
+            </main>
+        </div>
+    }
+}

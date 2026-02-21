@@ -1,0 +1,51 @@
+/*
+ * Forge Example 02 — TodoItem Component
+ * Demonstrates: event callbacks as props, conditional rendering
+ */
+
+#include <forge/web.h>
+
+@component TodoItem {
+
+    @props {
+        int    id;
+        char  *text;
+        int    done;
+        void (*onToggle)(int id);
+        void (*onDelete)(int id);
+    }
+
+    @style {
+        display:        flex;
+        align-items:    center;
+        gap:            12px;
+        padding:        12px 16px;
+        border-bottom:  1px solid #e2e8f0;
+        background:     {props.done ? "#f8fafc" : "#ffffff"};
+        transition:     background 0.2s;
+    }
+
+    @on(toggle) {
+        if (props.onToggle) props.onToggle(props.id);
+    }
+
+    @on(delete) {
+        if (props.onDelete) props.onDelete(props.id);
+    }
+
+    @template {
+        <li class="todo-item">
+            <input
+                type="checkbox"
+                checked={props.done ? "true" : "false"}
+                onchange={@toggle}
+            />
+            <span class={props.done ? "todo-text done" : "todo-text"}>
+                {props.text}
+            </span>
+            <button class="todo-delete" onclick={@delete}>
+                ✕
+            </button>
+        </li>
+    }
+}

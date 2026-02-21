@@ -1,0 +1,12 @@
+build/
+dist/
+*.o
+*.a
+*.wasm
+*.gen.c
+*.forge.js
+*.forge.d.ts
+.DS_Store
+*.swp
+*~
+node_modules/
