@@ -216,6 +216,33 @@ static void emit_nw_html(const HtmlNode *n, const char *parent_var,
     /* Append AFTER props are set so connectedCallback has full prop data */
     fprintf(out, "        if (__cc_new%d) %s.appendChild(__cc%d);\n",
             id, parent_var, id);
+
+    /* For singleton components (not inside a <for> loop), register a prop
+     * updater so app._refresh() keeps props in sync with parent state.
+     * Inside <for> loops (local_item != NULL) the loop's own attrUpdater
+     * recreates child elements with fresh props on each refresh. */
+    if (!local_item) {
+      int has_expr = 0;
+      for (int i = 0; i < n->attr_count; i++)
+        if (n->attrs[i].is_expr) { has_expr = 1; break; }
+      if (has_expr) {
+        fprintf(out, "      ((ref) => {\n");
+        fprintf(out, "        const __ae%d_p = () => {\n", id);
+        for (int i = 0; i < n->attr_count; i++) {
+          const char *aname = n->attrs[i].name;
+          const char *aval  = n->attrs[i].value ? n->attrs[i].value : "";
+          if (n->attrs[i].is_expr) {
+            fprintf(out, "          ref['%s'] = ", aname);
+            emit_expr_js(aval, out, NULL);
+            fprintf(out, ";\n");
+          }
+        }
+        fprintf(out, "        };\n");
+        fprintf(out, "        this._attrUpdaters.push(__ae%d_p);\n", id);
+        fprintf(out, "      })(__cc%d);\n", id);
+      }
+    }
+
     fprintf(out, "      }\n");
     break;
   }
