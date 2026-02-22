@@ -194,12 +194,12 @@ static void emit_nw_html(const HtmlNode *n, const char *parent_var,
             "        let __cc%d = this._hydrate ? "
             "%s.querySelector(':scope > forge-%s[data-fid=\"%d\"]') : null;\n",
             id, parent_var, ctag, id);
+    fprintf(out, "        const __cc_new%d = !__cc%d;\n", id, id);
     fprintf(out, "        if (!__cc%d) {\n", id);
     fprintf(out, "          __cc%d = document.createElement('forge-%s');\n", id, ctag);
     fprintf(out, "          __cc%d.setAttribute('data-fid', '%d');\n", id, id);
-    fprintf(out, "          %s.appendChild(__cc%d);\n", parent_var, id);
     fprintf(out, "        }\n");
-    /* Set props as attributes / properties */
+    /* Set props BEFORE appendChild so connectedCallback sees them */
     for (int i = 0; i < n->attr_count; i++) {
       const char *aname = n->attrs[i].name;
       const char *aval = n->attrs[i].value ? n->attrs[i].value : "";
@@ -213,6 +213,9 @@ static void emit_nw_html(const HtmlNode *n, const char *parent_var,
         fprintf(out, ");\n");
       }
     }
+    /* Append AFTER props are set so connectedCallback has full prop data */
+    fprintf(out, "        if (__cc_new%d) %s.appendChild(__cc%d);\n",
+            id, parent_var, id);
     fprintf(out, "      }\n");
     break;
   }
@@ -612,10 +615,11 @@ static int emit_nowasm_component(const ComponentNode *c,
                 }
                 /* f now at conversion char */
                 if (*f == 'f' || *f == 'e' || *f == 'g') {
-                  if (prec >= 0) fprintf(out, "${__v%d.toFixed(%d)}", vi, prec);
-                  else           fprintf(out, "${__v%d.toFixed(2)}", vi);
+                  /* Coerce with (+x||0) so string prices or undefined don't crash */
+                  if (prec >= 0) fprintf(out, "${(+__v%d||0).toFixed(%d)}", vi, prec);
+                  else           fprintf(out, "${(+__v%d||0).toFixed(2)}", vi);
                 } else if (*f == 'd' || *f == 'i' || *f == 'u') {
-                  fprintf(out, "${Math.floor(__v%d)}", vi);
+                  fprintf(out, "${Math.floor(+__v%d||0)}", vi);
                 } else if (*f == 's') {
                   fprintf(out, "${__v%d}", vi);
                 } else if (*f) {
