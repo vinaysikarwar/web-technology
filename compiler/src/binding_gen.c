@@ -542,34 +542,56 @@ static int emit_nowasm_component(const ComponentNode *c,
             fmt[fi] = '\0';
             if (*p == '"')
               p++;
-            /* skip comma and whitespace to get args */
-            while (*p == ',' || *p == ' ')
-              p++;
-            /* Remaining is the argument(s) before closing ')' */
-            char arg[256];
-            int ai = 0;
-            int depth = 1;
-            while (*p && depth > 0 && ai < 254) {
-              if (*p == '(')
-                depth++;
-              else if (*p == ')') {
-                depth--;
-                if (depth == 0)
-                  break;
-              }
-              arg[ai++] = *p;
-              p++;
-            }
-            arg[ai] = '\0';
-            /* trim trailing whitespace */
-            while (ai > 0 && (arg[ai - 1] == ' ' || arg[ai - 1] == '\t'))
-              arg[--ai] = '\0';
+            /* skip comma + whitespace before first argument */
+            if (*p == ',') p++;
+            while (*p == ' ') p++;
 
-            /* Build JS string: replace printf-style specifiers with JS
-             * template interpolation. Handles %d/%s/%f/%.2f/%05d etc. */
-            fprintf(out, "(() => { const __v = ");
-            emit_expr_js(arg, out, NULL);
-            fprintf(out, "; return `");
+            /* Parse each argument individually (split by ',' at depth==1).
+             * forge_sprintf("fmt", a, b, c) → args[0]="a", args[1]="b" ... */
+            char args[8][512];
+            int  nargs = 0;
+            int  depth = 1; /* already inside forge_sprintf( */
+            while (*p && depth > 0 && nargs < 8) {
+              int ai = 0;
+              while (*p && ai < 510) {
+                if (*p == '(') {
+                  depth++;
+                  args[nargs][ai++] = *p++;
+                } else if (*p == ')') {
+                  depth--;
+                  if (depth == 0) break; /* end of forge_sprintf() */
+                  args[nargs][ai++] = *p++;
+                } else if (*p == ',' && depth == 1) {
+                  p++; /* skip comma */
+                  while (*p == ' ') p++;
+                  break; /* end of this arg */
+                } else {
+                  args[nargs][ai++] = *p++;
+                }
+              }
+              /* trim trailing whitespace */
+              while (ai > 0 && (args[nargs][ai-1] == ' ' ||
+                                args[nargs][ai-1] == '\t'))
+                args[nargs][--ai] = '\0';
+              args[nargs][ai] = '\0';
+              if (ai > 0) nargs++;
+              if (depth == 0) break;
+            }
+
+            /* Build JS: (() => { const __v0 = arg0, __v1 = arg1; return `...`; })()
+             * Each %specifier consumes the next __vN in order. */
+            fprintf(out, "(() => { ");
+            if (nargs > 0) {
+              fprintf(out, "const ");
+              for (int i = 0; i < nargs; i++) {
+                if (i > 0) fprintf(out, ", ");
+                fprintf(out, "__v%d = ", i);
+                emit_expr_js(args[i], out, NULL);
+              }
+              fprintf(out, "; ");
+            }
+            fprintf(out, "return `");
+            int vi = 0;
             for (const char *f = fmt; *f; f++) {
               if (*f == '%') {
                 f++; /* skip '%' */
@@ -590,17 +612,18 @@ static int emit_nowasm_component(const ComponentNode *c,
                 }
                 /* f now at conversion char */
                 if (*f == 'f' || *f == 'e' || *f == 'g') {
-                  if (prec >= 0) fprintf(out, "${__v.toFixed(%d)}", prec);
-                  else           fprintf(out, "${__v.toFixed(2)}");
+                  if (prec >= 0) fprintf(out, "${__v%d.toFixed(%d)}", vi, prec);
+                  else           fprintf(out, "${__v%d.toFixed(2)}", vi);
                 } else if (*f == 'd' || *f == 'i' || *f == 'u') {
-                  fprintf(out, "${Math.floor(__v)}");
+                  fprintf(out, "${Math.floor(__v%d)}", vi);
                 } else if (*f == 's') {
-                  fprintf(out, "${__v}");
+                  fprintf(out, "${__v%d}", vi);
                 } else if (*f) {
                   /* unknown specifier — emit literally */
                   fprintf(out, "%%");
                   fputc(*f, out);
                 }
+                vi++;
               } else if (*f == '`') {
                 fprintf(out, "\\`");
               } else {
