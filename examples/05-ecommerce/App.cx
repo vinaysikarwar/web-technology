@@ -42,7 +42,7 @@
 
             <nav class="navbar">
                 <div class="nav-inner">
-                    <a class="nav-brand" onclick={@go_home}>
+                    <a href="/" class="nav-brand" onclick={@go_home}>
                         <span class="nav-brand-icon">🛍️</span>
                         <span class="nav-brand-name">ShopForge</span>
                     </a>
@@ -51,11 +51,11 @@
                         <input type="search" id="nav-search-input" placeholder="Search products…" />
                     </div>
                     <div class="nav-links">
-                        <a class={state.page == 0 ? "nav-link active" : "nav-link"} onclick={@go_home}>Home</a>
-                        <a class={state.page == 1 ? "nav-link active" : "nav-link"} onclick={@go_products}>Products</a>
-                        <a class={state.page == 5 ? "nav-link active" : "nav-link"} onclick={@go_about}>About</a>
-                        <a class={state.page == 6 ? "nav-link active" : "nav-link"} onclick={@go_contact}>Contact</a>
-                        <a class="nav-cart" onclick={@go_cart}>
+                        <a href="/" class={state.page == 0 ? "nav-link active" : "nav-link"} onclick={@go_home}>Home</a>
+                        <a href="/products" class={state.page == 1 ? "nav-link active" : "nav-link"} onclick={@go_products}>Products</a>
+                        <a href="/about" class={state.page == 5 ? "nav-link active" : "nav-link"} onclick={@go_about}>About</a>
+                        <a href="/contact" class={state.page == 6 ? "nav-link active" : "nav-link"} onclick={@go_contact}>Contact</a>
+                        <a href="/cart" class="nav-cart" onclick={@go_cart}>
                             <span>🛒</span>
                             <span class="cart-badge" id="cart-badge">{state.cart_count}</span>
                         </a>

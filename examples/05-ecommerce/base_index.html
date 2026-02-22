@@ -4,6 +4,15 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ShopForge — Modern Commerce</title>
+    <meta name="description" content="Shop 20,000+ products from top brands worldwide. Free shipping on orders over $50.">
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="ShopForge">
+    <meta property="og:title" content="ShopForge — Modern Commerce">
+    <meta property="og:description" content="Shop 20,000+ products from top brands worldwide. Free shipping on orders over $50.">
+    <meta property="og:url" content="https://shopforge.example.com/">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="ShopForge — Modern Commerce">
+    <link rel="canonical" href="https://shopforge.example.com/">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -426,6 +435,22 @@ function applyRoute(path) {
 
 window.addEventListener('popstate', () => applyRoute(window.location.pathname));
 
+/* ─── Global SPA link interceptor ───────────────────────────────────────── */
+/* Intercepts clicks on same-origin <a href="..."> so navigation happens via
+ * the client router (no full page reload). External links are let through. */
+document.addEventListener('click', e => {
+    const a = e.target.closest('a[href]');
+    if (!a) return;
+    let url;
+    try { url = new URL(a.href, location.origin); } catch { return; }
+    if (url.origin !== location.origin) return;  /* external — let browser handle */
+    const path = url.pathname;
+    e.preventDefault();
+    if (path === location.pathname) return;  /* already on this page */
+    history.pushState(null, '', path);
+    applyRoute(path);
+});
+
 /* ─── Component intercepts + initial routing ─────────────────────────────── */
 customElements.whenDefined('forge-app').then(() => {
 
@@ -441,7 +466,53 @@ customElements.whenDefined('forge-app').then(() => {
         configurable: true,
     });
 
-    /* Patch _refresh — push hash URL on every page navigation, render cart on page 3 */
+    /* ── Dynamic SEO ────────────────────────────────────────────────── */
+    const SEO_CFG = [
+        { title: 'ShopForge — Home',
+          desc: 'Shop 20,000+ products from top brands. Free shipping over $50.' },
+        { title: 'ShopForge — All Products',
+          desc: 'Browse electronics, clothing, books, home goods, sports gear and more.' },
+        null, /* page 2: product detail — built dynamically */
+        { title: 'ShopForge — Cart',
+          desc: 'Review your cart and proceed to checkout.' },
+        { title: 'ShopForge — Checkout',
+          desc: 'Complete your purchase securely.' },
+        { title: 'ShopForge — About',
+          desc: 'Learn about ShopForge and our mission to make shopping better.' },
+        { title: 'ShopForge — Contact',
+          desc: 'Get in touch with the ShopForge team.' },
+    ];
+
+    function updateSEO(page, product) {
+        let title, desc;
+        if (page === 2 && product) {
+            title = product.name + ' — ShopForge';
+            desc  = (product.description || product.name).slice(0, 155);
+        } else {
+            const cfg = SEO_CFG[page] || SEO_CFG[0];
+            title = cfg.title;
+            desc  = cfg.desc;
+        }
+
+        document.title = title;
+
+        const setMeta = (sel, attr, val) => {
+            let el = document.querySelector(sel);
+            if (!el) { el = document.createElement('meta'); document.head.appendChild(el); }
+            el.setAttribute(attr, val);
+        };
+
+        setMeta('meta[name="description"]',       'content', desc);
+        setMeta('meta[property="og:title"]',      'content', title);
+        setMeta('meta[property="og:description"]','content', desc);
+        setMeta('meta[property="og:url"]',        'content', location.href);
+        setMeta('meta[name="twitter:title"]',     'content', title);
+
+        const canonical = document.querySelector('link[rel="canonical"]');
+        if (canonical) canonical.href = location.origin + location.pathname;
+    }
+
+    /* Patch _refresh — push URL on every page navigation, update SEO, render cart */
     let _lastPage = app._state.page;
     let _lastId   = app._state.selected_id;
     const origRefresh = app._refresh.bind(app);
@@ -457,10 +528,14 @@ customElements.whenDefined('forge-app').then(() => {
             _lastId   = id;
             pushRoute(pg, id);
         }
+        /* Update SEO on every refresh */
+        const prod = pg === 2 && id ? allProducts.find(p => p.id === id) : null;
+        updateSEO(pg, prod);
     };
 
-    /* Apply initial route from URL path */
+    /* Apply initial route + initial SEO */
     const initPath = window.location.pathname;
+    updateSEO(app._state.page, null);
     if (initPath !== '/') applyRoute(initPath);
 });
 

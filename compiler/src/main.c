@@ -94,6 +94,7 @@ typedef struct {
   int dump_ast;
   int no_wasm;
   int prerender;
+  int ssr;       /* emit Node.js SSR renderer (*.forge.ssr.js) */
   int no_types;
   int esm;
   int web_component;
@@ -272,6 +273,7 @@ int main(int argc, char **argv) {
       .dump_ast = 0,
       .no_wasm = 0,
       .prerender = 0,
+      .ssr = 0,
       .no_types = 0,
       .esm = 1,
       .web_component = 1,
@@ -296,6 +298,8 @@ int main(int argc, char **argv) {
       cfg.no_wasm = 1;
     } else if (strcmp(argv[i], "--prerender") == 0) {
       cfg.prerender = 1;
+    } else if (strcmp(argv[i], "--ssr") == 0) {
+      cfg.ssr = 1;
     } else if (strcmp(argv[i], "--no-types") == 0) {
       cfg.no_types = 1;
     } else if (strcmp(argv[i], "--iife") == 0) {
@@ -338,6 +342,20 @@ int main(int argc, char **argv) {
         fclose(hf);
         printf("forge: \033[32m✓\033[0m %s (SSG)\n", html_path);
       }
+    }
+  }
+
+  /* SSR Pass: Generate Node.js render(state, props) => HTML for root component */
+  if (cfg.ssr && rc == 0 && registry_count > 0) {
+    /* Generate SSR renderer for the last compiled component (typically the root App) */
+    const ComponentNode *root = registry[registry_count - 1];
+    char ssr_path[512];
+    snprintf(ssr_path, sizeof(ssr_path), "%s/%s.forge.ssr.js", cfg.out_dir, root->name);
+    FILE *sf = fopen(ssr_path, "w");
+    if (sf) {
+      binding_gen_ssr_js(root, registry, registry_count, sf);
+      fclose(sf);
+      printf("forge: \033[32m✓\033[0m %s (SSR)\n", ssr_path);
     }
   }
 

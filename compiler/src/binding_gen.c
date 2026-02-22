@@ -188,11 +188,17 @@ static void emit_nw_html(const HtmlNode *n, const char *parent_var,
     char ctag[256];
     kebab(ctag, n->tag ? n->tag : "div");
     fprintf(out, "      { \n");
+    /* Try to reuse existing element during hydration; fall back to createElement
+     * if querySelector returns null (e.g. SSR content has no data-fid markers) */
     fprintf(out,
-            "        const __cc%d = this._hydrate ? "
-            "%s.querySelector(':scope > forge-%s[data-fid=\"%d\"]') : "
-            "document.createElement('forge-%s');\n",
-            id, parent_var, ctag, id, ctag);
+            "        let __cc%d = this._hydrate ? "
+            "%s.querySelector(':scope > forge-%s[data-fid=\"%d\"]') : null;\n",
+            id, parent_var, ctag, id);
+    fprintf(out, "        if (!__cc%d) {\n", id);
+    fprintf(out, "          __cc%d = document.createElement('forge-%s');\n", id, ctag);
+    fprintf(out, "          __cc%d.setAttribute('data-fid', '%d');\n", id, id);
+    fprintf(out, "          %s.appendChild(__cc%d);\n", parent_var, id);
+    fprintf(out, "        }\n");
     /* Set props as attributes / properties */
     for (int i = 0; i < n->attr_count; i++) {
       const char *aname = n->attrs[i].name;
@@ -207,10 +213,6 @@ static void emit_nw_html(const HtmlNode *n, const char *parent_var,
         fprintf(out, ");\n");
       }
     }
-    fprintf(out, "        if (!this._hydrate) {\n");
-    fprintf(out, "          __cc%d.setAttribute('data-fid', '%d');\n", id, id);
-    fprintf(out, "          %s.appendChild(__cc%d);\n", parent_var, id);
-    fprintf(out, "        }\n");
     fprintf(out, "      }\n");
     break;
   }
@@ -563,16 +565,42 @@ static int emit_nowasm_component(const ComponentNode *c,
             while (ai > 0 && (arg[ai - 1] == ' ' || arg[ai - 1] == '\t'))
               arg[--ai] = '\0';
 
-            /* Build JS string: replace %d, %s etc with template interpolation
-             */
+            /* Build JS string: replace printf-style specifiers with JS
+             * template interpolation. Handles %d/%s/%f/%.2f/%05d etc. */
             fprintf(out, "(() => { const __v = ");
             emit_expr_js(arg, out, NULL);
             fprintf(out, "; return `");
             for (const char *f = fmt; *f; f++) {
-              if (*f == '%' &&
-                  (*(f + 1) == 'd' || *(f + 1) == 's' || *(f + 1) == 'f')) {
-                fprintf(out, "${__v}");
-                f++;
+              if (*f == '%') {
+                f++; /* skip '%' */
+                /* skip flags: -, +, space, 0, # */
+                while (*f == '-' || *f == '+' || *f == ' ' ||
+                       *f == '0'  || *f == '#') f++;
+                /* skip width digits */
+                while (*f >= '0' && *f <= '9') f++;
+                /* optional precision: .N */
+                int prec = -1;
+                if (*f == '.') {
+                  f++;
+                  prec = 0;
+                  while (*f >= '0' && *f <= '9') {
+                    prec = prec * 10 + (*f - '0');
+                    f++;
+                  }
+                }
+                /* f now at conversion char */
+                if (*f == 'f' || *f == 'e' || *f == 'g') {
+                  if (prec >= 0) fprintf(out, "${__v.toFixed(%d)}", prec);
+                  else           fprintf(out, "${__v.toFixed(2)}");
+                } else if (*f == 'd' || *f == 'i' || *f == 'u') {
+                  fprintf(out, "${Math.floor(__v)}");
+                } else if (*f == 's') {
+                  fprintf(out, "${__v}");
+                } else if (*f) {
+                  /* unknown specifier — emit literally */
+                  fprintf(out, "%%");
+                  fputc(*f, out);
+                }
               } else if (*f == '`') {
                 fprintf(out, "\\`");
               } else {
@@ -998,5 +1026,201 @@ int binding_gen_prerender(const ComponentNode *c,
   _prerender_id = 0;
   emit_prerender_html_recursive(c->template_root, registry, registry_count,
                                 out);
+  return 0;
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+ * SSR RENDERER GENERATOR
+ * Generates ComponentName.forge.ssr.js — a Node.js module that exports
+ *   render(state, props) => HTML string
+ * No browser APIs (document / window / customElements) used.
+ * ═══════════════════════════════════════════════════════════════════════════
+ */
+
+/* Emit a Forge expression for SSR context.
+ * state.X, props.X, computed.X are kept as-is (function parameters match). */
+static void emit_ssr_expr(const char *expr, FILE *out) {
+  if (!expr) { fprintf(out, "''"); return; }
+  /* computed.X has no meaning in SSR — emit empty string */
+  if (strncmp(expr, "computed.", 9) == 0) { fprintf(out, "''"); return; }
+  fprintf(out, "%s", expr);
+}
+
+/* Forward-declare so emit_ssr_children and emit_ssr_node can call each other */
+static void emit_ssr_node(const HtmlNode *n, const ComponentNode **registry,
+                          int rc, int depth, FILE *out);
+
+static void emit_ssr_children(const HtmlNode *parent,
+                               const ComponentNode **registry, int rc,
+                               int depth, FILE *out) {
+  for (int i = 0; i < parent->child_count; i++)
+    emit_ssr_node(&parent->children[i], registry, rc, depth, out);
+}
+
+/* Indentation helper (max 8 levels) */
+static const char *_ssrind(int d) {
+  static const char *T[] = {
+    "", "  ", "    ", "      ", "        ",
+    "          ", "            ", "              "
+  };
+  return T[d < 0 ? 0 : d > 7 ? 7 : d];
+}
+
+static void emit_ssr_node(const HtmlNode *n, const ComponentNode **registry,
+                          int rc, int depth, FILE *out) {
+  if (!n) return;
+  const char *ind = _ssrind(depth);
+
+  switch (n->kind) {
+
+  case HTML_TEXT:
+    if (n->text && n->text[0]) {
+      fprintf(out, "%s__h += ", ind);
+      emit_js_str(n->text, out);
+      fprintf(out, ";\n");
+    }
+    break;
+
+  case HTML_EXPR:
+    if (n->text) {
+      fprintf(out, "%s__h += _e(", ind);
+      emit_ssr_expr(n->text, out);
+      fprintf(out, ");\n");
+    }
+    break;
+
+  case HTML_ELEMENT: {
+    /* Tag open */
+    fprintf(out, "%s__h += '<%s';\n", ind, n->tag ? n->tag : "div");
+    /* Attributes */
+    for (int i = 0; i < n->attr_count; i++) {
+      const Attribute *a = &n->attrs[i];
+      if (strncmp(a->name, "on", 2) == 0) continue; /* skip event handlers */
+      if (!a->is_expr) {
+        /* Static attribute — emit as JS string literal */
+        fprintf(out, "%s__h += ' %s=\"", ind, a->name);
+        if (a->value) {
+          for (const char *p = a->value; *p; p++) {
+            if (*p == '"')  fputs("\\\"", out);
+            else if (*p == '\\') fputs("\\\\", out);
+            else if (*p == '\'') fputs("\\'",  out);
+            else fputc(*p, out);
+          }
+        }
+        fprintf(out, "\"';\n");
+      } else {
+        /* Dynamic attribute — evaluate and escape */
+        fprintf(out, "%s__h += ' %s=\"' + _e(", ind, a->name);
+        emit_ssr_expr(a->value ? a->value : "", out);
+        fprintf(out, ") + '\"';\n");
+      }
+    }
+    fprintf(out, "%s__h += '>';\n", ind);
+    emit_ssr_children(n, registry, rc, depth, out);
+    if (!n->self_closing)
+      fprintf(out, "%s__h += '</%s>';\n", ind, n->tag ? n->tag : "div");
+    break;
+  }
+
+  case HTML_COMPONENT: {
+    /* Look up child component in registry */
+    int found = 0;
+    for (int i = 0; i < rc; i++) {
+      if (registry[i] && n->tag && strcmp(registry[i]->name, n->tag) == 0) {
+        found = 1; break;
+      }
+    }
+    if (found) {
+      fprintf(out, "%s__h += _render%s({", ind, n->tag);
+      for (int i = 0; i < n->attr_count; i++) {
+        const Attribute *a = &n->attrs[i];
+        fprintf(out, "'%s': (", a->name);
+        if (a->is_expr) emit_ssr_expr(a->value ? a->value : "''", out);
+        else            emit_js_str(a->value ? a->value : "", out);
+        fprintf(out, "), ");
+      }
+      fprintf(out, "});\n");
+    }
+    break;
+  }
+
+  case HTML_IF: {
+    const char *cond = NULL;
+    for (int i = 0; i < n->attr_count; i++)
+      if (strcmp(n->attrs[i].name, "condition") == 0) { cond = n->attrs[i].value; break; }
+    if (cond) { fprintf(out, "%sif (", ind); emit_ssr_expr(cond, out); fprintf(out, ") {\n"); }
+    else        fprintf(out, "%s{\n", ind);
+    emit_ssr_children(n, registry, rc, depth + 1, out);
+    fprintf(out, "%s}\n", ind);
+    break;
+  }
+
+  case HTML_FOR: {
+    const char *each = NULL, *as_var = NULL;
+    for (int i = 0; i < n->attr_count; i++) {
+      if (strcmp(n->attrs[i].name, "each") == 0) each   = n->attrs[i].value;
+      if (strcmp(n->attrs[i].name, "as")   == 0) as_var = n->attrs[i].value;
+    }
+    if (each && as_var) {
+      fprintf(out, "%sfor (const %s of (", ind, as_var);
+      emit_ssr_expr(each, out);
+      fprintf(out, " || [])) {\n");
+    } else {
+      fprintf(out, "%s{\n", ind);
+    }
+    emit_ssr_children(n, registry, rc, depth + 1, out);
+    fprintf(out, "%s}\n", ind);
+    break;
+  }
+  }
+}
+
+int binding_gen_ssr_js(const ComponentNode *c,
+                        const ComponentNode **registry, int registry_count,
+                        FILE *out) {
+  if (!c) return 1;
+
+  fprintf(out,
+    "/**\n"
+    " * AUTO-GENERATED by Forge Compiler — SSR Renderer\n"
+    " * Component: %s  (Node.js, no browser APIs)\n"
+    " * Usage: const { render } = require('./%s.forge.ssr.js');\n"
+    " *        const html = render(state, props);\n"
+    " */\n"
+    "'use strict';\n\n",
+    c->name, c->name);
+
+  /* HTML-escape helper */
+  fprintf(out,
+    "const _e = v => v == null ? '' : String(v)\n"
+    "  .replace(/&/g, '&amp;').replace(/</g, '&lt;')\n"
+    "  .replace(/>/g, '&gt;').replace(/\"/g, '&quot;');\n\n");
+
+  /* Emit helper renderers for every child component in the registry */
+  for (int i = 0; i < registry_count; i++) {
+    const ComponentNode *ch = registry[i];
+    if (!ch || strcmp(ch->name, c->name) == 0) continue;
+
+    fprintf(out, "function _render%s(props) {\n", ch->name);
+    fprintf(out, "  if (!props) props = {};\n");
+    fprintf(out, "  const state    = props; /* child: props === state in SSR */\n");
+    fprintf(out, "  const computed = {}; /* computed fields are no-ops in SSR */\n");
+    fprintf(out, "  let __h = '';\n");
+    if (ch->template_root)
+      emit_ssr_node(ch->template_root, registry, registry_count, 1, out);
+    fprintf(out, "  return __h;\n}\n\n");
+  }
+
+  /* Main render(state, props) function */
+  fprintf(out, "function render(state, props) {\n");
+  fprintf(out, "  if (!state) state = {};\n");
+  fprintf(out, "  if (!props) props = {};\n");
+  fprintf(out, "  const computed = {}; /* computed fields are no-ops in SSR */\n");
+  fprintf(out, "  let __h = '';\n");
+  if (c->template_root)
+    emit_ssr_node(c->template_root, registry, registry_count, 1, out);
+  fprintf(out, "  return __h;\n}\n\n");
+
+  fprintf(out, "module.exports = { render };\n");
   return 0;
 }

@@ -1,0 +1,64 @@
+/*
+ * Forge Example 06 — MedicineCard Component
+ *
+ * Compact medicine listing card.
+ * Props are flattened from API response in base_index.html.
+ * Dispatches forge:view-medicine and forge:add-to-cart events.
+ */
+
+@component MedicineCard {
+
+    @props {
+        int    medicine_id;
+        char  *name;
+        char  *category_name;
+        char  *primary_ingredient;
+        char  *primary_strength;
+        float  price;
+        int    prescription_required;
+        char  *dosage_form;
+        char  *emoji;
+    }
+
+    @computed {
+        char *price_str    = forge_sprintf("₹%.2f", props.price);
+        char *ingr_str     = forge_sprintf("%s %s", props.primary_ingredient, props.primary_strength);
+        int   show_rx      = props.prescription_required;
+    }
+
+    @on(view) {
+        window.dispatchEvent(new CustomEvent("forge:view-medicine", {
+            detail: { id: this._props.medicine_id }
+        }));
+    }
+
+    @on(add_to_cart) {
+        event.stopPropagation();
+        window.dispatchEvent(new CustomEvent("forge:add-to-cart", {
+            detail: { id: this._props.medicine_id }
+        }));
+    }
+
+    @template {
+        <div class="med-card" onclick={@view}>
+            <div class="med-card-top">
+                <span class="med-emoji">{props.emoji}</span>
+                <div class="med-badges">
+                    <if condition={computed.show_rx}>
+                        <span class="badge badge-rx">Rx</span>
+                    </if>
+                </div>
+            </div>
+            <div class="med-card-body">
+                <div class="med-cat-label">{props.category_name}</div>
+                <h3 class="med-name">{props.name}</h3>
+                <div class="med-ingr">{computed.ingr_str}</div>
+                <div class="med-dosage-form">{props.dosage_form}</div>
+            </div>
+            <div class="med-card-footer">
+                <span class="med-price">{computed.price_str}</span>
+                <button class="add-btn" onclick={@add_to_cart}>Add</button>
+            </div>
+        </div>
+    }
+}

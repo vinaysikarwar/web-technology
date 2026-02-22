@@ -43,4 +43,12 @@ int binding_gen_prerender(const ComponentNode *c,
                           const ComponentNode **registry, int registry_count,
                           FILE *out);
 
+/* ─── SSR Renderer (Node.js) ────────────────────────────────────────────────
+ * Generates ComponentName.forge.ssr.js — a pure-JS Node.js module that
+ * exports render(state, props) => HTML string.  No browser APIs used.
+ */
+int binding_gen_ssr_js(const ComponentNode *c,
+                       const ComponentNode **registry, int registry_count,
+                       FILE *out);
+
 #endif /* FORGE_BINDING_GEN_H */

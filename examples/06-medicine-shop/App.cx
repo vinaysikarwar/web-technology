@@ -1,0 +1,220 @@
+/*
+ * Forge Example 06 — App Root Component (Medicine Shop)
+ *
+ * Pages:
+ *   0 = Home        (category grid + featured medicines)
+ *   1 = Medicines   (paginated list, filtered by category/search)
+ *   2 = Detail      (full medicine view)
+ *   3 = Cart
+ *
+ * Child components: CategoryCard, MedicineCard, MedicineDetail
+ * Data loaded via REST API in base_index.html.
+ */
+
+#include "CategoryCard.cx"
+#include "MedicineCard.cx"
+#include "MedicineDetail.cx"
+
+@component App {
+
+    @state {
+        int    page              = 0;
+        void  *products;
+        void  *categories;
+        int    selected_cat      = 0;
+        char  *selected_cat_name = "All Medicines";
+        int    loading           = 1;
+        int    cart_count        = 0;
+        int    total_count       = 0;
+        char  *search_query      = "";
+
+        /* Detail page — selected medicine fields */
+        int    selected_id       = 0;
+        char  *det_name          = "";
+        float  det_price         = 0;
+        char  *det_cat           = "";
+        char  *det_mfr           = "";
+        char  *det_ingredient    = "";
+        char  *det_strength      = "";
+        char  *det_form          = "";
+        char  *det_pack          = "";
+        char  *det_desc          = "";
+        char  *det_emoji         = "";
+        int    det_rx            = 0;
+        int    det_stock         = 0;
+    }
+
+    @computed {
+        int    show_loading   = state.loading;
+        int    show_home      = state.page == 0;
+        int    show_list      = state.page == 1;
+        int    show_detail    = state.page == 2;
+        int    show_cart      = state.page == 3;
+        char  *cart_label     = forge_sprintf("%d", state.cart_count);
+        char  *total_label    = forge_sprintf("%d medicines found", state.total_count);
+    }
+
+    @on(go_home)     { state.page = 0; }
+    @on(go_list)     { state.page = 1; }
+    @on(go_cart)     { state.page = 3; }
+
+    @template {
+        <div class="medshop-app">
+
+            <nav class="navbar">
+                <div class="nav-inner">
+                    <a href="/" class="nav-brand" onclick={@go_home}>
+                        <span class="nav-brand-icon">💊</span>
+                        <span class="nav-brand-name">MediForge</span>
+                    </a>
+
+                    <div class="nav-search">
+                        <span class="nav-search-icon">🔍</span>
+                        <input type="search" id="med-search-input"
+                               placeholder="Search medicines, ingredients…" />
+                    </div>
+
+                    <div class="nav-links">
+                        <a href="/" class={state.page == 0 ? "nav-link active" : "nav-link"} onclick={@go_home}>Home</a>
+                        <a href="/medicines" class={state.page == 1 ? "nav-link active" : "nav-link"} onclick={@go_list}>Medicines</a>
+                        <a href="/cart" class="nav-cart" onclick={@go_cart}>
+                            <span>🛒</span>
+                            <span class="cart-badge">{computed.cart_label}</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+
+            <if condition={computed.show_loading}>
+                <div class="loading-screen">
+                    <div class="spinner"></div>
+                    <p>Loading medicines…</p>
+                </div>
+            </if>
+
+            <if condition={computed.show_home}>
+                <div class="home-page">
+                    <section class="hero">
+                        <div class="hero-content">
+                            <div class="hero-badge">Your Trusted Online Pharmacy</div>
+                            <h1 class="hero-title">Medicines Delivered Fast</h1>
+                            <p class="hero-sub">Browse 13,000+ medicines across 15 categories. Authentic products, competitive prices.</p>
+                            <a href="/medicines" class="btn btn-primary btn-lg hero-cta" onclick={@go_list}>
+                                Browse All Medicines
+                            </a>
+                        </div>
+                    </section>
+
+                    <div class="section">
+                        <div class="section-hd">
+                            <h2 class="section-title">Shop by Category</h2>
+                        </div>
+                        <div class="cat-grid">
+                            <for each={state.categories} as={cat}>
+                                <CategoryCard cat_id={cat.id} name={cat.name} image={cat.image} active={cat.active} />
+                            </for>
+                        </div>
+                    </div>
+
+                    <div class="section">
+                        <div class="section-hd">
+                            <h2 class="section-title">Featured Medicines</h2>
+                            <a href="/medicines" class="view-all" onclick={@go_list}>View all</a>
+                        </div>
+                        <div class="med-grid">
+                            <for each={state.products} as={p}>
+                                <MedicineCard
+                                    medicine_id={p.id}
+                                    name={p.name}
+                                    category_name={p.category_name}
+                                    primary_ingredient={p.primary_ingredient}
+                                    primary_strength={p.primary_strength}
+                                    price={p.price}
+                                    prescription_required={p.prescription_required}
+                                    dosage_form={p.dosage_form}
+                                    emoji={p.emoji}
+                                />
+                            </for>
+                        </div>
+                    </div>
+                </div>
+            </if>
+
+            <if condition={computed.show_list}>
+                <div class="list-page">
+                    <div class="list-layout">
+                        <aside class="cat-sidebar">
+                            <h3 class="sidebar-title">Categories</h3>
+                            <ul class="sidebar-list">
+                                <for each={state.categories} as={cat}>
+                                    <li class={cat.active ? "sidebar-item active" : "sidebar-item"}>
+                                        <CategoryCard cat_id={cat.id} name={cat.name} image={cat.image} active={cat.active} />
+                                    </li>
+                                </for>
+                            </ul>
+                        </aside>
+
+                        <div class="list-main">
+                            <div class="list-header">
+                                <h2 class="list-title">{state.selected_cat_name}</h2>
+                                <span class="result-count">{computed.total_label}</span>
+                            </div>
+
+                            <div class="med-grid">
+                                <for each={state.products} as={p}>
+                                    <MedicineCard
+                                        medicine_id={p.id}
+                                        name={p.name}
+                                        category_name={p.category_name}
+                                        primary_ingredient={p.primary_ingredient}
+                                        primary_strength={p.primary_strength}
+                                        price={p.price}
+                                        prescription_required={p.prescription_required}
+                                        dosage_form={p.dosage_form}
+                                        emoji={p.emoji}
+                                    />
+                                </for>
+                            </div>
+
+                            <div class="load-more-wrap" id="load-more-trigger">
+                                <button class="btn btn-outline" id="load-more-btn">Load More</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </if>
+
+            <if condition={computed.show_detail}>
+                <MedicineDetail
+                    medicine_id={state.selected_id}
+                    name={state.det_name}
+                    price={state.det_price}
+                    category_name={state.det_cat}
+                    manufacturer={state.det_mfr}
+                    primary_ingredient={state.det_ingredient}
+                    primary_strength={state.det_strength}
+                    dosage_form={state.det_form}
+                    pack_unit={state.det_pack}
+                    description={state.det_desc}
+                    emoji={state.det_emoji}
+                    prescription_required={state.det_rx}
+                    stock={state.det_stock}
+                />
+            </if>
+
+            <if condition={computed.show_cart}>
+                <div class="section">
+                    <h2 class="section-title">Your Cart</h2>
+                    <div id="cart-items-root"></div>
+                </div>
+            </if>
+
+            <footer class="site-footer">
+                <div class="footer-inner">
+                    <span>© 2026 MediForge. Built with Forge Framework.</span>
+                </div>
+            </footer>
+
+        </div>
+    }
+}

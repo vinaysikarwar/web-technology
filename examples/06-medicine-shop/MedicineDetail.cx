@@ -1,0 +1,116 @@
+/*
+ * Forge Example 06 — MedicineDetail Component
+ *
+ * Full medicine detail view: image, ingredients, price, add-to-cart.
+ * All fields are passed as props from App.cx state.
+ */
+
+#include <forge/web.h>
+
+@component MedicineDetail {
+
+    @props {
+        int    medicine_id;
+        char  *name;
+        float  price;
+        char  *category_name;
+        char  *manufacturer;
+        char  *primary_ingredient;
+        char  *primary_strength;
+        char  *dosage_form;
+        char  *pack_unit;
+        char  *description;
+        char  *emoji;
+        int    prescription_required;
+        int    stock;
+    }
+
+    @state {
+        int qty = 1;
+    }
+
+    @computed {
+        char *price_str   = forge_sprintf("₹%.2f", props.price);
+        char *qty_str     = forge_sprintf("%d", state.qty);
+        char *stock_str   = forge_sprintf("%d units available", props.stock);
+        char *ingr_str    = forge_sprintf("%s %s", props.primary_ingredient, props.primary_strength);
+        int   has_stock   = props.stock > 0;
+        int   show_rx     = props.prescription_required;
+        int   can_add     = props.stock > 0 && state.qty > 0;
+    }
+
+    @on(inc_qty) {
+        if (state.qty < props.stock) state.qty = state.qty + 1;
+    }
+
+    @on(dec_qty) {
+        if (state.qty > 1) state.qty = state.qty - 1;
+    }
+
+    @on(add_to_cart) {
+        window.dispatchEvent(new CustomEvent("forge:add-to-cart", {
+            detail: { id: this._props.medicine_id, qty: this._state.qty }
+        }));
+    }
+
+    @on(go_back) {
+        window.dispatchEvent(new CustomEvent("forge:go-back"));
+    }
+
+    @template {
+        <div class="detail-wrap">
+            <div class="breadcrumb">
+                <a href="/" onclick={@go_back}>Home</a>
+                <span> › </span>
+                <a href="/medicines" onclick={@go_back}>{props.category_name}</a>
+                <span> › </span>
+                <span>{props.name}</span>
+            </div>
+
+            <div class="detail-grid">
+                <div class="detail-left">
+                    <div class="detail-img">{props.emoji}</div>
+                    <div class="detail-badges">
+                        <if condition={computed.show_rx}>
+                            <span class="badge badge-rx">Prescription Required</span>
+                        </if>
+                        <if condition={computed.has_stock}>
+                            <span class="badge badge-stock">In Stock</span>
+                        </if>
+                    </div>
+                </div>
+
+                <div class="detail-info">
+                    <div class="detail-cat">{props.category_name}</div>
+                    <h1 class="detail-name">{props.name}</h1>
+                    <div class="detail-ingr">{computed.ingr_str}</div>
+                    <div class="detail-mfr">By {props.manufacturer}</div>
+
+                    <div class="detail-price-row">
+                        <span class="detail-price">{computed.price_str}</span>
+                        <span class="detail-pack">{props.dosage_form} · {props.pack_unit}</span>
+                    </div>
+
+                    <div class="detail-stock-line">{computed.stock_str}</div>
+
+                    <p class="detail-desc">{props.description}</p>
+
+                    <div class="qty-control">
+                        <button class="qty-btn" onclick={@dec_qty}>−</button>
+                        <span class="qty-val">{computed.qty_str}</span>
+                        <button class="qty-btn" onclick={@inc_qty}>+</button>
+                    </div>
+
+                    <div class="detail-actions">
+                        <button class="btn btn-primary btn-lg" onclick={@add_to_cart}>
+                            Add to Cart
+                        </button>
+                        <button class="btn btn-outline btn-lg" onclick={@go_back}>
+                            Back
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}

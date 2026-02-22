@@ -1,0 +1,31 @@
+/*
+ * Forge Example 06 — CategoryCard Component
+ *
+ * Renders a single medicine category tile.
+ * Dispatches forge:select-category when clicked.
+ */
+
+@component CategoryCard {
+
+    @props {
+        int   cat_id;
+        char *name;
+        char *image;
+        int   active;
+    }
+
+    @on(select) {
+        window.dispatchEvent(new CustomEvent("forge:select-category", {
+            detail: { id: this._props.cat_id, name: this._props.name }
+        }));
+    }
+
+    @template {
+        <div class={props.active ? "cat-card active" : "cat-card"} onclick={@select}>
+            <div class="cat-img-wrap">
+                <img src={props.image} alt={props.name} class="cat-img" />
+            </div>
+            <span class="cat-name">{props.name}</span>
+        </div>
+    }
+}
