@@ -209,6 +209,8 @@ let AUTH_TOKEN = localStorage.getItem('mediforge_token') || '';
 async function apiFetch(endpoint, opts = {}) {
     const headers = { 'Accept': 'application/json', ...opts.headers };
     if (AUTH_TOKEN) headers['Authorization'] = 'Bearer ' + AUTH_TOKEN;
+    if (opts.body && typeof opts.body === 'string' && !headers['Content-Type'])
+        headers['Content-Type'] = 'application/json';
     const res = await fetch(API_BASE + endpoint, { ...opts, headers });
     if (!res.ok) throw new Error(`API ${res.status}: ${endpoint}`);
     return res.json();
@@ -240,31 +242,58 @@ function flattenMedicine(m) {
     };
 }
 
-/* ── Cart (localStorage) ────────────────────────────────────────────────── */
-const Cart = {
-    _key: 'mediforge_cart',
-    get()           { try { return JSON.parse(localStorage.getItem(this._key)) || []; } catch { return []; } },
-    save(items)     { localStorage.setItem(this._key, JSON.stringify(items)); },
-    add(id, qty=1)  {
-        const items = this.get();
-        const ex = items.find(i => i.id === id);
-        if (ex) ex.qty += qty; else items.push({ id, qty });
-        this.save(items);
-    },
-    remove(id)      { this.save(this.get().filter(i => i.id !== id)); },
-    setQty(id, qty) {
-        if (qty <= 0) { this.remove(id); return; }
-        const items = this.get();
-        const it = items.find(i => i.id === id);
-        if (it) it.qty = qty;
-        this.save(items);
-    },
-    count()              { return this.get().reduce((s, i) => s + i.qty, 0); },
-    subtotal(medicines)  { return this.get().reduce((s, i) => {
-        const m = medicines.find(x => x.id === i.id);
-        return m ? s + m.price * i.qty : s;
-    }, 0); },
-};
+/* ── Cart API ────────────────────────────────────────────────────────────── */
+let _cartData = null;   /* cached server cart response */
+
+function _cartCount() {
+    return (_cartData?.items || []).reduce((s, i) => s + i.quantity, 0);
+}
+
+async function loadCart() {
+    try {
+        _cartData = await apiFetch('/cart/');
+    } catch (e) {
+        console.warn('Cart load failed:', e.message);
+        _cartData = { items: [], subtotal: 0, total_price: 0 };
+    }
+    app.cart_count = _cartCount();
+    app._refresh();
+    return _cartData;
+}
+
+async function apiAddToCart(medicineId, qty = 1) {
+    const data = await apiFetch('/cart/add_item/', {
+        method: 'POST',
+        body: JSON.stringify({ medicine_id: medicineId, quantity: qty }),
+    });
+    _cartData = data;
+    app.cart_count = _cartCount();
+    app._refresh();
+    return data;
+}
+
+async function apiRemoveCartItem(itemId) {
+    const data = await apiFetch('/cart/remove_item/', {
+        method: 'POST',
+        body: JSON.stringify({ item_id: itemId }),
+    });
+    _cartData = data;
+    app.cart_count = _cartCount();
+    app._refresh();
+    return data;
+}
+
+async function apiUpdateCartItem(itemId, qty) {
+    if (qty <= 0) return apiRemoveCartItem(itemId);
+    const data = await apiFetch('/cart/update_item/', {
+        method: 'POST',
+        body: JSON.stringify({ item_id: itemId, quantity: qty }),
+    });
+    _cartData = data;
+    app.cart_count = _cartCount();
+    app._refresh();
+    return data;
+}
 
 /* ── Toast ──────────────────────────────────────────────────────────────── */
 function toast(msg, type = '') {
@@ -287,17 +316,20 @@ let searchQuery  = '';
 let _isLoadingMore = false;
 
 function updateBadge() {
-    app.cart_count = Cart.count();
+    app.cart_count = _cartCount();
+    app._refresh();
 }
 
 /* ── Cart renderer ──────────────────────────────────────────────────────── */
-function renderCartPage() {
+async function renderCartPage() {
     const root = document.getElementById('cart-items-root');
     if (!root) return;
-    const items = Cart.get().map(i => ({
-        med: allMedicines.find(x => x.id === i.id),
-        qty: i.qty,
-    })).filter(i => i.med);
+
+    root.innerHTML = '<div style="text-align:center;padding:3rem;color:var(--slate-400)"><div class="spinner" style="margin:0 auto 1rem"></div>Loading cart…</div>';
+
+    const cart = await loadCart();
+    const items = cart.items || [];
+    const fmt   = n => '₹' + Number(n).toFixed(2);
 
     if (!items.length) {
         root.innerHTML = `<div class="cart-empty">
@@ -309,47 +341,76 @@ function renderCartPage() {
         return;
     }
 
-    const sub = Cart.subtotal(allMedicines);
-    const tax = sub * 0.05;
-    const total = sub + tax;
-    const fmt = n => '₹' + Number(n).toFixed(2);
+    const sub          = cart.subtotal        || 0;
+    const total        = cart.total_price     || 0;
+    const planSavings  = cart.plan_savings    || 0;
+    const couponDisc   = cart.coupon_discount || 0;
+    const tax          = cart.tax_breakdown   || {};
+    const plan         = cart.active_care_plan;
 
     root.innerHTML = `
         <div class="cart-wrap">
-            ${items.map(({ med: m, qty }) => `
-            <div class="cart-row" data-id="${m.id}">
-                <div style="font-size:2rem;text-align:center">${m.emoji}</div>
-                <div>
-                    <div style="font-weight:600;font-size:.9rem">${m.name}</div>
-                    <div style="font-size:.78rem;color:var(--slate-400)">${m.category_name}</div>
-                    <div style="font-size:.82rem;font-weight:700;color:var(--green);margin-top:.2rem">${fmt(m.price)}</div>
-                </div>
-                <div style="display:flex;align-items:center;gap:.5rem">
-                    <button class="qty-btn" data-action="dec" data-id="${m.id}" style="font-size:1rem">−</button>
-                    <span style="min-width:1.5rem;text-align:center;font-weight:600">${qty}</span>
-                    <button class="qty-btn" data-action="inc" data-id="${m.id}" style="font-size:1rem">+</button>
-                </div>
-                <div style="font-weight:700">${fmt(m.price * qty)}</div>
-                <button class="qty-btn" data-action="remove" data-id="${m.id}" style="font-size:.8rem;color:var(--red)">✕</button>
-            </div>`).join('')}
+            ${items.map(item => {
+                const m     = item.medicine;
+                const price = parseFloat(m.price) || 0;
+                const cat   = m.category?.name || '';
+                const emoji = getMedEmoji(m.dosage_form);
+                return `
+                <div class="cart-row">
+                    <div style="font-size:2rem;text-align:center">${emoji}</div>
+                    <div style="flex:1;min-width:0">
+                        <div style="font-weight:600;font-size:.9rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${m.name}</div>
+                        <div style="font-size:.78rem;color:var(--slate-400)">${cat}</div>
+                        <div style="font-size:.82rem;font-weight:700;color:var(--green);margin-top:.2rem">${fmt(price)}</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:.5rem">
+                        <button class="qty-btn" data-action="dec" data-item-id="${item.id}" style="font-size:1rem">−</button>
+                        <span style="min-width:1.5rem;text-align:center;font-weight:600">${item.quantity}</span>
+                        <button class="qty-btn" data-action="inc" data-item-id="${item.id}" data-medicine-id="${m.id}" style="font-size:1rem">+</button>
+                    </div>
+                    <div style="font-weight:700;white-space:nowrap">${fmt(price * item.quantity)}</div>
+                    <button class="qty-btn" data-action="remove" data-item-id="${item.id}" style="font-size:.8rem;color:var(--red)">✕</button>
+                </div>`;
+            }).join('')}
             <div class="order-summary">
                 <div class="summary-row"><span>Subtotal</span><span>${fmt(sub)}</span></div>
-                <div class="summary-row"><span>GST (5%)</span><span>${fmt(tax)}</span></div>
+                ${plan && cart.active_plan_benefit ? `
+                <div class="summary-row" style="color:var(--green)">
+                    <span>${plan.name} (${plan.discount_percentage}% off)</span>
+                    <span>−${fmt(planSavings)}</span>
+                </div>` : ''}
+                ${couponDisc > 0 ? `
+                <div class="summary-row" style="color:var(--green)">
+                    <span>Coupon Discount</span><span>−${fmt(couponDisc)}</span>
+                </div>` : ''}
+                ${(tax.total_tax || 0) > 0 ? `
+                <div class="summary-row">
+                    <span>GST (CGST ${fmt(tax.cgst)} + SGST ${fmt(tax.sgst)})</span>
+                    <span>${fmt(tax.total_tax)}</span>
+                </div>` : ''}
                 <div class="summary-row"><span>Delivery</span><span style="color:var(--green)">FREE</span></div>
                 <div class="summary-total"><span>Total</span><span>${fmt(total)}</span></div>
                 <button class="btn btn-primary" style="width:100%;margin-top:1.25rem">Proceed to Checkout</button>
             </div>
         </div>`;
 
-    root.addEventListener('click', e => {
-        const id = +e.target.dataset.id;
-        if (!id) return;
-        const action = e.target.dataset.action;
-        if (action === 'inc')    Cart.setQty(id, (Cart.get().find(i => i.id === id)?.qty || 0) + 1);
-        else if (action === 'dec')    Cart.setQty(id, (Cart.get().find(i => i.id === id)?.qty || 1) - 1);
-        else if (action === 'remove') Cart.remove(id);
-        else return;
-        updateBadge();
+    root.addEventListener('click', async e => {
+        const itemId = +e.target.dataset.itemId;
+        if (!itemId) return;
+        const action  = e.target.dataset.action;
+        const curItem = (_cartData?.items || []).find(i => i.id === itemId);
+        if (!curItem) return;
+        try {
+            if (action === 'inc') {
+                await apiAddToCart(+e.target.dataset.medicineId, 1);
+            } else if (action === 'dec') {
+                await apiUpdateCartItem(itemId, curItem.quantity - 1);
+            } else if (action === 'remove') {
+                await apiRemoveCartItem(itemId);
+            } else return;
+        } catch (err) {
+            toast('Cart update failed: ' + err.message, 'error');
+        }
         renderCartPage();
     }, { once: true });
 }
@@ -599,7 +660,7 @@ customElements.whenDefined('forge-app').then(async () => {
         if (e.target.id === 'load-more-btn') loadMore();
     });
 
-    updateBadge();
+    loadCart();   /* fetch server cart and update badge */
 });
 
 /* ── CustomEvent handlers ───────────────────────────────────────────────── */
@@ -626,12 +687,15 @@ window.addEventListener('forge:view-medicine', e => {
     viewMedicine(e.detail.id);
 });
 
-window.addEventListener('forge:add-to-cart', e => {
+window.addEventListener('forge:add-to-cart', async e => {
     const med = allMedicines.find(m => m.id === e.detail.id);
-    if (!med) return;
-    Cart.add(e.detail.id, e.detail.qty || 1);
-    updateBadge();
-    toast((med.name.length > 30 ? med.name.slice(0, 30) + '…' : med.name) + ' added to cart', 'success');
+    const label = med ? (med.name.length > 30 ? med.name.slice(0, 30) + '…' : med.name) : 'Medicine';
+    try {
+        await apiAddToCart(e.detail.id, e.detail.qty || 1);
+        toast(label + ' added to cart', 'success');
+    } catch (err) {
+        toast('Could not add to cart: ' + err.message, 'error');
+    }
 });
 
 window.addEventListener('forge:go-back', () => {
