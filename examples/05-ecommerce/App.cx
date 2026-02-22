@@ -1,0 +1,234 @@
+/*
+ * Forge Example 05 - ShopForge Ecommerce App
+ *
+ * Root component. Routing driven by state.page (0-6).
+ * Filtering/search is handled externally: base_index.html sets
+ * app.products to the already-filtered subset before each render.
+ *
+ * page values:
+ *   0 = Home     1 = Products   2 = Product Detail
+ *   3 = Cart     4 = Checkout   5 = About   6 = Contact
+ */
+
+#include "ProductCard.cx"
+#include "ProductDetail.cx"
+#include "CheckoutForm.cx"
+
+@component App {
+
+    @state {
+        int   page;
+        int   selected_id;
+        char *products;
+        char *filter_tag;
+        int   cart_count;
+    }
+
+    @on(go_home)     { state.page = 0; }
+    @on(go_products) { state.page = 1; }
+    @on(go_cart)     { state.page = 3; }
+    @on(go_checkout) { state.page = 4; }
+    @on(go_about)    { state.page = 5; }
+    @on(go_contact)  { state.page = 6; }
+    @on(go_detail)   { state.page = 2; }
+
+    @on(filter_all)        { state.filter_tag = "all"; }
+    @on(filter_sale)       { state.filter_tag = "sale"; }
+    @on(filter_new)        { state.filter_tag = "new"; }
+    @on(filter_bestseller) { state.filter_tag = "bestseller"; }
+
+    @template {
+        <div class="shopforge-app">
+
+            <nav class="navbar">
+                <div class="nav-inner">
+                    <a class="nav-brand" onclick={@go_home}>
+                        <span class="nav-brand-icon">🛍️</span>
+                        <span class="nav-brand-name">ShopForge</span>
+                    </a>
+                    <div class="nav-search">
+                        <span class="nav-search-icon">🔍</span>
+                        <input type="search" id="nav-search-input" placeholder="Search products…" />
+                    </div>
+                    <div class="nav-links">
+                        <a class={state.page == 0 ? "nav-link active" : "nav-link"} onclick={@go_home}>Home</a>
+                        <a class={state.page == 1 ? "nav-link active" : "nav-link"} onclick={@go_products}>Products</a>
+                        <a class={state.page == 5 ? "nav-link active" : "nav-link"} onclick={@go_about}>About</a>
+                        <a class={state.page == 6 ? "nav-link active" : "nav-link"} onclick={@go_contact}>Contact</a>
+                        <a class="nav-cart" onclick={@go_cart}>
+                            <span>🛒</span>
+                            <span class="cart-badge" id="cart-badge">{state.cart_count}</span>
+                        </a>
+                    </div>
+                </div>
+            </nav>
+
+            <if condition={state.page == 0}>
+                <section class="hero">
+                    <div class="hero-content">
+                        <div class="hero-eyebrow">⚡ Powered by Forge WebAssembly</div>
+                        <h1 class="hero-title">Shop Smarter, Live Better</h1>
+                        <p class="hero-sub">Curated products from top brands worldwide. Free shipping on orders over $50.</p>
+                        <div class="hero-actions">
+                            <button class="btn btn-primary" onclick={@go_products}>Browse Products</button>
+                            <button class="btn btn-outline" onclick={@filter_sale}>View Sale Items</button>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="stats-bar">
+                    <div class="stats-inner">
+                        <div><div class="stat-val">20,000+</div><div class="stat-lbl">Products</div></div>
+                        <div><div class="stat-val">150k+</div><div class="stat-lbl">Happy Customers</div></div>
+                        <div><div class="stat-val">4.9★</div><div class="stat-lbl">Avg Rating</div></div>
+                        <div><div class="stat-val">48hr</div><div class="stat-lbl">Delivery</div></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-hd">
+                        <div class="section-title">Featured Products</div>
+                        <a class="view-all" onclick={@go_products}>View all</a>
+                    </div>
+                    <div class="product-grid">
+                        <for each={state.products} as={p}>
+                            <if condition={p.featured}>
+                                <ProductCard
+                                    product_id={p.id}
+                                    name={p.name}
+                                    category={p.category}
+                                    price={p.price}
+                                    original_price={p.originalPrice}
+                                    rating={p.rating}
+                                    reviews={p.reviews}
+                                    stock={p.stock}
+                                    emoji={p.emoji}
+                                    tags={p.tags}
+                                />
+                            </if>
+                        </for>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="promo-banner">
+                        <div>
+                            <div class="promo-title">🏷️ Up to 30% Off Sale</div>
+                            <div class="promo-sub">Limited time offers across all categories</div>
+                        </div>
+                        <button class="btn btn-white" onclick={@filter_sale}>Shop the Sale</button>
+                    </div>
+                </div>
+            </if>
+
+            <if condition={state.page == 1}>
+                <div class="section">
+                    <div class="section-hd">
+                        <div class="section-title">All Products</div>
+                        <div class="filter-tabs">
+                            <button class={state.filter_tag == "all" ? "filter-tab active" : "filter-tab"} onclick={@filter_all}>All</button>
+                            <button class={state.filter_tag == "sale" ? "filter-tab active" : "filter-tab"} onclick={@filter_sale}>Sale</button>
+                            <button class={state.filter_tag == "new" ? "filter-tab active" : "filter-tab"} onclick={@filter_new}>New</button>
+                            <button class={state.filter_tag == "bestseller" ? "filter-tab active" : "filter-tab"} onclick={@filter_bestseller}>Best Sellers</button>
+                        </div>
+                    </div>
+                    <div class="product-grid">
+                        <for each={state.products} as={p}>
+                            <ProductCard
+                                product_id={p.id}
+                                name={p.name}
+                                category={p.category}
+                                price={p.price}
+                                original_price={p.originalPrice}
+                                rating={p.rating}
+                                reviews={p.reviews}
+                                stock={p.stock}
+                                emoji={p.emoji}
+                                tags={p.tags}
+                            />
+                        </for>
+                    </div>
+                </div>
+            </if>
+
+            <if condition={state.page == 2}>
+                <for each={state.products} as={p}>
+                    <if condition={p.id == state.selected_id}>
+                        <ProductDetail
+                            product_id={p.id}
+                            name={p.name}
+                            category={p.category}
+                            price={p.price}
+                            original_price={p.originalPrice}
+                            rating={p.rating}
+                            reviews={p.reviews}
+                            stock={p.stock}
+                            emoji={p.emoji}
+                            tags={p.tags}
+                            description={p.description}
+                        />
+                    </if>
+                </for>
+            </if>
+
+            <if condition={state.page == 3}>
+                <div class="section" id="cart-section">
+                    <div id="cart-items-root"></div>
+                </div>
+            </if>
+
+            <if condition={state.page == 4}>
+                <div class="section">
+                    <CheckoutForm total_str="—" item_count={state.cart_count} />
+                </div>
+            </if>
+
+            <if condition={state.page == 5}>
+                <section class="hero">
+                    <div class="hero-content">
+                        <div class="hero-eyebrow">🏪 Est. 2020</div>
+                        <h1 class="hero-title">About ShopForge</h1>
+                        <p class="hero-sub">We started with a simple belief: shopping online should be fast, honest, and delightful.</p>
+                    </div>
+                </section>
+                <div class="section">
+                    <p id="about-text">
+                        Founded in 2020, ShopForge set out to prove that ecommerce built on Forge WebAssembly can deliver sub-20ms page loads, zero layout shift, and a native-feeling shopping experience. Today we stock over 20,000 products across five categories and ship to 80 countries.
+                    </p>
+                </div>
+            </if>
+
+            <if condition={state.page == 6}>
+                <div class="section">
+                    <h2 class="section-title">Get in Touch</h2>
+                    <div id="contact-box">
+                        <form id="contact-form">
+                            <div class="form-grid-2">
+                                <div class="form-group">
+                                    <label class="form-label">Name *</label>
+                                    <input class="form-input" id="c-name" placeholder="Your name" />
+                                </div>
+                                <div class="form-group">
+                                    <label class="form-label">Email *</label>
+                                    <input class="form-input" id="c-email" type="email" placeholder="your@email.com" />
+                                </div>
+                            </div>
+                            <div class="form-group">
+                                <label class="form-label">Message *</label>
+                                <textarea class="form-input" id="c-msg" rows="5" placeholder="How can we help?"></textarea>
+                            </div>
+                            <button type="submit" class="btn btn-primary btn-full">Send Message</button>
+                        </form>
+                    </div>
+                </div>
+            </if>
+
+            <footer class="site-footer">
+                <div class="footer-inner">
+                    <span>© 2026 ShopForge. Built with Forge Framework.</span>
+                </div>
+            </footer>
+
+        </div>
+    }
+}

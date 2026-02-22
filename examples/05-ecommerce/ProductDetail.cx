@@ -1,0 +1,114 @@
+/*
+ * Forge Example 05 — ProductDetail Component
+ *
+ * Full product detail view: image, specs table, qty control, add-to-cart.
+ *
+ * Demonstrates:
+ *   - @state for quantity counter
+ *   - @computed for formatted prices and stock status
+ *   - @on handlers for qty increment/decrement and cart actions
+ */
+
+#include <forge/web.h>
+
+@component ProductDetail {
+
+    @props {
+        int    product_id;
+        char  *name;
+        char  *category;
+        float  price;
+        float  original_price;
+        float  rating;
+        int    reviews;
+        int    stock;
+        char  *emoji;
+        char  *tags;
+        char  *description;
+    }
+
+    @state {
+        int qty;            /* current selected quantity, default 1 */
+    }
+
+    @computed {
+        char *price_str   = forge_sprintf("$%.2f", props.price);
+        char *orig_str    = forge_sprintf("$%.2f", props.original_price);
+        char *qty_str     = forge_sprintf("%d", state.qty);
+        char *stock_str   = forge_sprintf("%d in stock", props.stock);
+        int   has_discount = props.original_price > 0;
+        int   can_add      = props.stock > 0 && state.qty > 0;
+    }
+
+    @on(inc_qty) {
+        if (state.qty < props.stock) state.qty = state.qty + 1;
+    }
+
+    @on(dec_qty) {
+        if (state.qty > 1) state.qty = state.qty - 1;
+    }
+
+    @on(add_to_cart) {
+        window.dispatchEvent(new CustomEvent("forge:add-to-cart", {
+            detail: { id: this._props.product_id, qty: this._state.qty }
+        }));
+    }
+
+    @on(buy_now) {
+        window.dispatchEvent(new CustomEvent("forge:buy-now", {
+            detail: { id: this._props.product_id, qty: this._state.qty }
+        }));
+    }
+
+    @on(go_back) {
+        window.dispatchEvent(new CustomEvent("forge:go-products"));
+    }
+
+    @template {
+        <div class="detail-wrap">
+            <div class="breadcrumb">
+                <a href="/" onclick={@go_back}>Home</a>
+                <span> › </span>
+                <a href="/products" onclick={@go_back}>Products</a>
+                <span> › </span>
+                <span>{props.name}</span>
+            </div>
+
+            <div class="detail-grid">
+                <div>
+                    <div class="detail-img">{props.emoji}</div>
+                </div>
+
+                <div class="detail-info">
+                    <h1 class="detail-name">{props.name}</h1>
+                    <div class="detail-stars">
+                        <span>{props.rating} ★ · {props.reviews} reviews</span>
+                    </div>
+                    <div class="detail-price-row">
+                        <div class="detail-price">{computed.price_str}</div>
+                        <if condition={computed.has_discount}>
+                            <div class="detail-orig">{computed.orig_str}</div>
+                        </if>
+                    </div>
+                    <div class="stock-badge in-stock">{computed.stock_str}</div>
+                    <p class="detail-desc">{props.description}</p>
+
+                    <div class="qty-control">
+                        <button class="qty-btn" onclick={@dec_qty}>−</button>
+                        <span class="qty-val">{computed.qty_str}</span>
+                        <button class="qty-btn" onclick={@inc_qty}>+</button>
+                    </div>
+
+                    <div class="detail-add-btn">
+                        <button class="btn btn-primary" onclick={@add_to_cart}>
+                            Add to Cart
+                        </button>
+                        <button class="btn btn-outline" onclick={@buy_now}>
+                            Buy Now
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    }
+}

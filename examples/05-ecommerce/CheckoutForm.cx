@@ -1,0 +1,109 @@
+/*
+ * Forge Example 05 — CheckoutForm Component
+ *
+ * Two-step checkout: shipping info + payment card, then order confirmation.
+ *
+ * Demonstrates:
+ *   - @state to track form submission lifecycle (submitted, order_no)
+ *   - @on handler for form submit and order placement
+ *   - Conditional rendering of success vs form views
+ */
+
+#include <forge/web.h>
+
+@component CheckoutForm {
+
+    @props {
+        char *total_str;    /* pre-formatted total e.g. "$149.99" */
+        int   item_count;
+    }
+
+    @state {
+        int   submitted;    /* 0 = form visible, 1 = success screen */
+        char *order_no;     /* generated order number */
+    }
+
+    @on(place_order) {
+        state.submitted = 1;
+        state.order_no  = "SF-" + Math.random().toString(36).slice(2, 8).toUpperCase();
+        window.dispatchEvent(new CustomEvent("forge:order-placed"));
+    }
+
+    @on(continue_shopping) {
+        state.submitted = 0;
+        window.dispatchEvent(new CustomEvent("forge:go-products"));
+    }
+
+    @template {
+        <div class="checkout-form-wrap">
+
+            <if condition={state.submitted}>
+                <div class="order-placed">
+                    <div class="order-placed-icon">🎉</div>
+                    <h2>Order Placed!</h2>
+                    <p>Thank you! We'll email your confirmation shortly.</p>
+                    <div class="order-no">Order #{state.order_no}</div>
+                    <button class="btn btn-primary" onclick={@continue_shopping}>
+                        Continue Shopping
+                    </button>
+                </div>
+            </if>
+
+            <if condition={!state.submitted}>
+                <div class="checkout-form">
+                    <div class="checkout-step-title">📦 Shipping Information</div>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label">First Name *</label>
+                            <input class="form-input" id="f-first" placeholder="John" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">Last Name *</label>
+                            <input class="form-input" id="f-last" placeholder="Smith" />
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Email *</label>
+                        <input class="form-input" id="f-email" type="email" placeholder="john@example.com" />
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Address *</label>
+                        <input class="form-input" id="f-addr" placeholder="123 Main St" />
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label">City *</label>
+                            <input class="form-input" id="f-city" placeholder="New York" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">ZIP *</label>
+                            <input class="form-input" id="f-zip" placeholder="10001" />
+                        </div>
+                    </div>
+                </div>
+
+                <div class="checkout-form" style="margin-top:1rem">
+                    <div class="checkout-step-title">💳 Payment</div>
+                    <div class="form-group">
+                        <label class="form-label">Card Number *</label>
+                        <input class="form-input" id="f-card" placeholder="4242 4242 4242 4242" />
+                    </div>
+                    <div class="form-grid-2">
+                        <div class="form-group">
+                            <label class="form-label">Expiry *</label>
+                            <input class="form-input" id="f-exp" placeholder="MM/YY" />
+                        </div>
+                        <div class="form-group">
+                            <label class="form-label">CVV *</label>
+                            <input class="form-input" id="f-cvv" placeholder="•••" />
+                        </div>
+                    </div>
+                    <button class="btn btn-success btn-full" onclick={@place_order}>
+                        🔒 Place Order — {props.total_str}
+                    </button>
+                </div>
+            </if>
+
+        </div>
+    }
+}

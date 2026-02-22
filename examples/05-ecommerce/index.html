@@ -1,0 +1,986 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ShopForge — Modern Commerce</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+/* ─── Reset + Base ─────────────────────────────────────────────────────────── */
+*, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+body { font-family:'Plus Jakarta Sans',sans-serif; background:#f8fafc; color:#1e293b; overflow-x:hidden; }
+a { text-decoration:none; color:inherit; }
+button, input, textarea, select { font-family:inherit; }
+button { cursor:pointer; }
+img { max-width:100%; }
+
+/* ─── Variables ─────────────────────────────────────────────────────────────── */
+:root {
+    --primary:#6366f1; --primary-d:#4f46e5; --primary-l:#eff0fe;
+    --green:#10b981; --red:#ef4444; --amber:#f59e0b;
+    --slate-50:#f8fafc; --slate-100:#f1f5f9; --slate-200:#e2e8f0;
+    --slate-400:#94a3b8; --slate-500:#64748b; --slate-700:#334155; --slate-900:#0f172a;
+    --white:#fff;
+    --radius:12px; --shadow:0 4px 24px rgba(0,0,0,0.07); --shadow-lg:0 12px 40px rgba(0,0,0,0.12);
+    --nav-h:68px;
+}
+
+/* ─── Navbar ────────────────────────────────────────────────────────────────── */
+.navbar { background:var(--white); border-bottom:1px solid var(--slate-200); position:sticky; top:0; z-index:200; }
+.nav-inner { max-width:1280px; margin:0 auto; padding:0 1.5rem; height:var(--nav-h); display:flex; align-items:center; gap:1rem; }
+.nav-brand { display:flex; align-items:center; gap:0.5rem; margin-right:auto; }
+.nav-brand-icon { font-size:1.6rem; }
+.nav-brand-name { font-weight:800; font-size:1.2rem; color:var(--slate-900); }
+.nav-brand-name span { color:var(--primary); }
+.nav-search { flex:1; max-width:420px; position:relative; }
+.nav-search input { width:100%; padding:0.6rem 1rem 0.6rem 2.6rem; border:1.5px solid var(--slate-200); border-radius:10px; font-size:0.9rem; background:var(--slate-50); outline:none; transition:border-color .15s; }
+.nav-search input:focus { border-color:var(--primary); background:var(--white); }
+.nav-search-icon { position:absolute; left:0.85rem; top:50%; transform:translateY(-50%); color:var(--slate-400); font-size:0.9rem; pointer-events:none; }
+.nav-links { display:flex; align-items:center; gap:0.25rem; }
+.nav-link { padding:0.5rem 0.875rem; border-radius:8px; color:var(--slate-500); font-weight:500; font-size:0.9rem; transition:all .15s; }
+.nav-link:hover, .nav-link.active { background:var(--primary-l); color:var(--primary); font-weight:600; }
+.nav-cart { position:relative; padding:0.5rem 0.875rem; border-radius:8px; color:var(--slate-700); font-size:1.2rem; transition:background .15s; }
+.nav-cart:hover { background:var(--slate-100); }
+.cart-badge { position:absolute; top:2px; right:2px; min-width:18px; height:18px; background:var(--primary); color:#fff; border-radius:99px; font-size:0.65rem; font-weight:700; display:flex; align-items:center; justify-content:center; padding:0 4px; }
+.cart-badge[data-count="0"] { display:none; }
+
+/* ─── Toast ─────────────────────────────────────────────────────────────────── */
+#toast-container { position:fixed; bottom:1.5rem; right:1.5rem; z-index:999; display:flex; flex-direction:column; gap:0.5rem; }
+.toast { background:var(--slate-900); color:#fff; padding:0.75rem 1.25rem; border-radius:10px; font-size:0.875rem; font-weight:500; animation:slideUp .25s ease; box-shadow:var(--shadow-lg); display:flex; align-items:center; gap:0.5rem; }
+.toast.success { border-left:3px solid var(--green); }
+@keyframes slideUp { from{opacity:0;transform:translateY(12px)} to{opacity:1;transform:translateY(0)} }
+
+/* ─── Page ──────────────────────────────────────────────────────────────────── */
+#page-root { min-height:calc(100vh - var(--nav-h) - 240px); }
+
+/* ─── Hero ──────────────────────────────────────────────────────────────────── */
+.hero { padding:5rem 1.5rem; background:linear-gradient(135deg,#eff6ff 0%,#fdf4ff 100%); text-align:center; }
+.hero-eyebrow { display:inline-flex; align-items:center; gap:0.4rem; padding:0.4rem 1rem; background:var(--white); border-radius:99px; color:var(--primary); font-weight:600; font-size:0.82rem; margin-bottom:1.5rem; box-shadow:0 2px 12px rgba(99,102,241,.14); }
+.hero-title { font-size:clamp(2rem,5vw,3.75rem); font-weight:800; color:var(--slate-900); line-height:1.08; margin-bottom:1.25rem; }
+.hero-title em { font-style:normal; color:var(--primary); }
+.hero-sub { font-size:1.1rem; color:var(--slate-500); line-height:1.7; max-width:520px; margin:0 auto 2.5rem; }
+.hero-actions { display:flex; gap:1rem; justify-content:center; flex-wrap:wrap; }
+.btn { display:inline-flex; align-items:center; gap:0.4rem; padding:0.8rem 1.75rem; border:none; border-radius:10px; font-weight:700; font-size:0.95rem; cursor:pointer; transition:all .15s; }
+.btn-primary { background:var(--primary); color:#fff; }
+.btn-primary:hover { background:var(--primary-d); }
+.btn-outline { background:var(--white); color:var(--slate-700); border:1.5px solid var(--slate-200); }
+.btn-outline:hover { border-color:var(--primary); color:var(--primary); }
+.btn-ghost { background:transparent; color:var(--slate-500); }
+.btn-ghost:hover { background:var(--slate-100); color:var(--slate-700); }
+.btn-sm { padding:0.5rem 1.1rem; font-size:0.85rem; }
+.btn-full { width:100%; justify-content:center; }
+.btn-danger { background:var(--red); color:#fff; }
+.btn-danger:hover { background:#dc2626; }
+.btn-success { background:var(--green); color:#fff; }
+.btn-success:hover { background:#059669; }
+
+/* ─── Stats ─────────────────────────────────────────────────────────────────── */
+.stats-bar { background:var(--white); border-top:1px solid var(--slate-100); border-bottom:1px solid var(--slate-100); padding:1.75rem 1.5rem; }
+.stats-inner { max-width:1280px; margin:0 auto; display:grid; grid-template-columns:repeat(4,1fr); gap:1rem; text-align:center; }
+.stat-val { font-size:1.875rem; font-weight:800; color:var(--slate-900); }
+.stat-lbl { font-size:0.825rem; color:var(--slate-400); margin-top:0.2rem; }
+
+/* ─── Section ───────────────────────────────────────────────────────────────── */
+.section { padding:4rem 1.5rem; max-width:1280px; margin:0 auto; }
+.section-hd { display:flex; justify-content:space-between; align-items:flex-end; margin-bottom:2rem; flex-wrap:wrap; gap:1rem; }
+.section-title { font-size:1.75rem; font-weight:700; color:var(--slate-900); }
+.section-sub { color:var(--slate-500); font-size:0.9rem; margin-top:0.3rem; }
+.view-all { color:var(--primary); font-weight:600; font-size:0.9rem; }
+.view-all:hover { text-decoration:underline; }
+
+/* ─── Category chips ────────────────────────────────────────────────────────── */
+.cat-grid { display:flex; gap:0.75rem; flex-wrap:wrap; }
+.cat-chip { display:flex; align-items:center; gap:0.5rem; padding:0.625rem 1.25rem; background:var(--white); border:1.5px solid var(--slate-200); border-radius:99px; font-weight:600; font-size:0.875rem; color:var(--slate-600); cursor:pointer; transition:all .15s; }
+.cat-chip:hover, .cat-chip.active { background:var(--primary-l); border-color:var(--primary); color:var(--primary); }
+.cat-chip-icon { font-size:1.1rem; }
+
+/* ─── Promo banner ──────────────────────────────────────────────────────────── */
+.promo-banner { background:linear-gradient(135deg,var(--primary),#7c3aed); border-radius:20px; padding:3rem 2.5rem; color:#fff; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:2rem; }
+.promo-title { font-size:1.875rem; font-weight:800; margin-bottom:0.5rem; }
+.promo-sub { color:rgba(255,255,255,.75); font-size:1rem; }
+.btn-white { background:#fff; color:var(--primary); }
+.btn-white:hover { background:var(--slate-100); }
+
+/* ─── Product Grid ──────────────────────────────────────────────────────────── */
+.product-grid { display:grid; grid-template-columns:repeat(auto-fill,minmax(260px,1fr)); gap:1.5rem; }
+.product-card { background:var(--white); border-radius:var(--radius); overflow:hidden; box-shadow:var(--shadow); transition:transform .2s,box-shadow .2s; display:flex; flex-direction:column; }
+.product-card:hover { transform:translateY(-4px); box-shadow:var(--shadow-lg); }
+.product-card-img { height:200px; display:flex; align-items:center; justify-content:center; font-size:5rem; background:linear-gradient(135deg,#eff0fe,#fdf4ff); position:relative; cursor:pointer; }
+.product-badges { position:absolute; top:0.75rem; left:0.75rem; display:flex; flex-direction:column; gap:0.25rem; }
+.badge { padding:0.2rem 0.55rem; border-radius:6px; font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:.05em; }
+.badge-sale { background:#fef2f2; color:var(--red); }
+.badge-new { background:#ecfdf5; color:var(--green); }
+.badge-bs { background:#fefce8; color:#92400e; }
+.product-card-body { padding:1.25rem; display:flex; flex-direction:column; flex:1; }
+.product-cat { font-size:0.72rem; font-weight:600; text-transform:uppercase; letter-spacing:.06em; color:var(--primary); margin-bottom:0.4rem; }
+.product-name { font-size:1rem; font-weight:700; color:var(--slate-900); margin-bottom:0.5rem; line-height:1.35; cursor:pointer; }
+.product-name:hover { color:var(--primary); }
+.stars { color:#f59e0b; font-size:0.78rem; display:flex; align-items:center; gap:0.3rem; margin-bottom:0.875rem; }
+.star-count { color:var(--slate-400); font-size:0.78rem; }
+.product-price-row { display:flex; align-items:center; gap:0.5rem; margin-bottom:1rem; }
+.product-price { font-size:1.25rem; font-weight:800; color:var(--slate-900); }
+.product-orig { font-size:0.875rem; color:var(--slate-400); text-decoration:line-through; }
+.product-discount { font-size:0.75rem; font-weight:700; color:var(--red); }
+.product-card-footer { margin-top:auto; }
+.add-to-cart-btn { width:100%; padding:0.7rem; background:var(--primary); color:#fff; border:none; border-radius:9px; font-weight:700; font-size:0.9rem; cursor:pointer; transition:background .15s; }
+.add-to-cart-btn:hover { background:var(--primary-d); }
+.add-to-cart-btn.added { background:var(--green); }
+.stock-low { font-size:0.75rem; color:var(--red); font-weight:600; margin-bottom:0.5rem; }
+
+/* ─── Products page controls ────────────────────────────────────────────────── */
+.product-controls { display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:1rem; margin-bottom:2rem; }
+.filter-tabs { display:flex; gap:0.375rem; background:var(--slate-100); padding:0.3rem; border-radius:10px; flex-wrap:wrap; }
+.filter-tab { padding:0.45rem 1.1rem; border:none; background:transparent; border-radius:7px; font-weight:600; font-size:0.85rem; color:var(--slate-500); cursor:pointer; transition:all .15s; }
+.filter-tab.active { background:var(--white); color:var(--slate-900); box-shadow:0 2px 8px rgba(0,0,0,.06); }
+.sort-select { padding:0.5rem 2rem 0.5rem 0.875rem; border:1.5px solid var(--slate-200); border-radius:9px; font-size:0.875rem; font-weight:500; color:var(--slate-700); background:var(--white); outline:none; cursor:pointer; appearance:auto; }
+.result-count { color:var(--slate-500); font-size:0.875rem; }
+
+/* ─── Product Detail ────────────────────────────────────────────────────────── */
+.detail-wrap { max-width:1280px; margin:0 auto; padding:2.5rem 1.5rem; }
+.breadcrumb { display:flex; align-items:center; gap:0.4rem; font-size:0.875rem; color:var(--slate-400); margin-bottom:2.5rem; flex-wrap:wrap; }
+.breadcrumb a { color:var(--primary); }
+.breadcrumb a:hover { text-decoration:underline; }
+.detail-grid { display:grid; grid-template-columns:1fr 420px; gap:3rem; align-items:start; }
+.detail-img { height:420px; background:linear-gradient(135deg,#eff0fe,#fdf4ff); border-radius:20px; display:flex; align-items:center; justify-content:center; font-size:9rem; margin-bottom:1.5rem; }
+.detail-img-thumbs { display:flex; gap:0.75rem; }
+.thumb { width:72px; height:72px; background:linear-gradient(135deg,#eff0fe,#fdf4ff); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:2rem; cursor:pointer; border:2px solid transparent; transition:border-color .15s; }
+.thumb.active { border-color:var(--primary); }
+.detail-info { }
+.detail-badges { display:flex; gap:0.4rem; flex-wrap:wrap; margin-bottom:1rem; }
+.detail-name { font-size:1.875rem; font-weight:800; color:var(--slate-900); margin-bottom:0.75rem; line-height:1.15; }
+.detail-stars { display:flex; align-items:center; gap:0.75rem; margin-bottom:1.25rem; }
+.detail-stars .stars { font-size:1rem; }
+.reviews-link { color:var(--primary); font-size:0.875rem; font-weight:600; }
+.reviews-link:hover { text-decoration:underline; }
+.detail-price-row { display:flex; align-items:baseline; gap:0.75rem; margin-bottom:1.75rem; }
+.detail-price { font-size:2rem; font-weight:800; color:var(--slate-900); }
+.detail-orig { font-size:1.125rem; color:var(--slate-400); text-decoration:line-through; }
+.detail-save { font-size:0.875rem; font-weight:700; color:var(--red); }
+.detail-desc { color:var(--slate-500); line-height:1.8; margin-bottom:1.75rem; font-size:0.95rem; }
+.qty-control { display:flex; align-items:center; gap:0; border:1.5px solid var(--slate-200); border-radius:10px; overflow:hidden; width:fit-content; margin-bottom:1.25rem; }
+.qty-btn { width:40px; height:44px; background:var(--slate-50); border:none; color:var(--slate-700); font-size:1.25rem; cursor:pointer; transition:background .1s; display:flex; align-items:center; justify-content:center; }
+.qty-btn:hover { background:var(--slate-200); }
+.qty-val { width:52px; text-align:center; font-weight:700; font-size:1rem; border:none; outline:none; border-left:1.5px solid var(--slate-200); border-right:1.5px solid var(--slate-200); height:44px; }
+.detail-add-btn { display:flex; gap:0.75rem; margin-bottom:1.5rem; }
+.specs-table { border:1px solid var(--slate-200); border-radius:var(--radius); overflow:hidden; }
+.specs-table-title { padding:0.875rem 1.25rem; font-weight:700; font-size:0.9rem; color:var(--slate-900); background:var(--slate-50); border-bottom:1px solid var(--slate-200); }
+.spec-row { display:flex; border-bottom:1px solid var(--slate-100); }
+.spec-row:last-child { border-bottom:none; }
+.spec-key { width:40%; padding:0.75rem 1.25rem; font-size:0.85rem; font-weight:600; color:var(--slate-500); background:var(--slate-50); border-right:1px solid var(--slate-100); }
+.spec-val { padding:0.75rem 1.25rem; font-size:0.85rem; color:var(--slate-700); }
+.stock-badge { display:inline-flex; align-items:center; gap:0.375rem; padding:0.35rem 0.75rem; border-radius:99px; font-size:0.8rem; font-weight:600; margin-bottom:1.25rem; }
+.in-stock { background:#ecfdf5; color:#065f46; }
+.low-stock { background:#fef3c7; color:#92400e; }
+.out-stock { background:#fef2f2; color:#991b1b; }
+
+/* ─── Reviews ───────────────────────────────────────────────────────────────── */
+.reviews-section { margin-top:3rem; }
+.review-card { background:var(--white); border-radius:var(--radius); padding:1.5rem; box-shadow:var(--shadow); margin-bottom:1rem; }
+.review-header { display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:0.75rem; flex-wrap:wrap; gap:0.5rem; }
+.reviewer-name { font-weight:700; color:var(--slate-900); }
+.review-date { font-size:0.8rem; color:var(--slate-400); }
+.review-text { color:var(--slate-500); line-height:1.7; font-size:0.9rem; }
+.review-verified { font-size:0.75rem; color:var(--green); font-weight:600; margin-top:0.5rem; }
+
+/* ─── Cart page ─────────────────────────────────────────────────────────────── */
+.cart-layout { display:grid; grid-template-columns:1fr 380px; gap:2.5rem; align-items:start; }
+.cart-table { background:var(--white); border-radius:var(--radius); box-shadow:var(--shadow); overflow:hidden; }
+.cart-row { display:grid; grid-template-columns:80px 1fr auto auto auto; gap:1.25rem; align-items:center; padding:1.25rem 1.5rem; border-bottom:1px solid var(--slate-100); }
+.cart-row:last-child { border-bottom:none; }
+.cart-img { width:72px; height:72px; background:linear-gradient(135deg,#eff0fe,#fdf4ff); border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:2rem; flex-shrink:0; }
+.cart-name { font-weight:700; color:var(--slate-900); font-size:0.95rem; }
+.cart-cat { font-size:0.775rem; color:var(--slate-400); margin-top:0.2rem; }
+.cart-price { font-weight:700; color:var(--slate-900); }
+.cart-remove { background:none; border:none; color:var(--slate-300); font-size:1.2rem; cursor:pointer; transition:color .15s; padding:0.25rem; }
+.cart-remove:hover { color:var(--red); }
+.order-summary { background:var(--white); border-radius:var(--radius); padding:1.75rem; box-shadow:var(--shadow); position:sticky; top:calc(var(--nav-h) + 1rem); }
+.summary-title { font-size:1.125rem; font-weight:700; color:var(--slate-900); margin-bottom:1.5rem; }
+.summary-row { display:flex; justify-content:space-between; margin-bottom:0.875rem; font-size:0.9rem; }
+.summary-row span:first-child { color:var(--slate-500); }
+.summary-divider { border:none; border-top:1px solid var(--slate-100); margin:1.25rem 0; }
+.summary-total { display:flex; justify-content:space-between; font-size:1.125rem; font-weight:800; color:var(--slate-900); margin-bottom:1.5rem; }
+.promo-input { display:flex; gap:0.5rem; margin-bottom:1.5rem; }
+.promo-input input { flex:1; padding:0.625rem 0.875rem; border:1.5px solid var(--slate-200); border-radius:9px; font-size:0.875rem; outline:none; }
+.promo-input input:focus { border-color:var(--primary); }
+.cart-empty { text-align:center; padding:5rem 2rem; }
+.cart-empty-icon { font-size:4rem; margin-bottom:1rem; }
+.cart-empty h2 { font-size:1.5rem; font-weight:700; color:var(--slate-900); margin-bottom:0.75rem; }
+.cart-empty p { color:var(--slate-500); margin-bottom:2rem; }
+
+/* ─── Checkout ──────────────────────────────────────────────────────────────── */
+.checkout-grid { display:grid; grid-template-columns:1fr 380px; gap:2.5rem; align-items:start; }
+.checkout-form { background:var(--white); border-radius:var(--radius); padding:2rem; box-shadow:var(--shadow); }
+.checkout-step-title { font-size:1.1rem; font-weight:700; color:var(--slate-900); margin-bottom:1.5rem; padding-bottom:0.875rem; border-bottom:1px solid var(--slate-100); }
+.form-grid-2 { display:grid; grid-template-columns:1fr 1fr; gap:1rem; }
+.form-group { margin-bottom:1rem; }
+.form-label { display:block; font-size:0.82rem; font-weight:600; color:var(--slate-600); margin-bottom:0.375rem; }
+.form-input { width:100%; padding:0.7rem 0.9rem; border:1.5px solid var(--slate-200); border-radius:9px; font-size:0.9rem; outline:none; transition:border-color .15s; }
+.form-input:focus { border-color:var(--primary); }
+.order-placed { text-align:center; padding:4rem 2rem; }
+.order-placed-icon { font-size:5rem; margin-bottom:1.5rem; }
+.order-placed h2 { font-size:2rem; font-weight:800; color:var(--slate-900); margin-bottom:0.75rem; }
+.order-placed p { color:var(--slate-500); margin-bottom:2rem; font-size:1rem; }
+.order-no { display:inline-block; background:var(--primary-l); color:var(--primary); padding:0.5rem 1.25rem; border-radius:99px; font-weight:700; font-size:0.9rem; margin-bottom:2rem; }
+
+/* ─── Footer ────────────────────────────────────────────────────────────────── */
+footer { background:var(--slate-900); color:var(--slate-400); padding:4rem 1.5rem 2rem; margin-top:auto; }
+.footer-grid { max-width:1280px; margin:0 auto; display:grid; grid-template-columns:2.5fr 1fr 1fr 1fr; gap:3rem; margin-bottom:3rem; }
+.footer-brand-name { font-size:1.2rem; font-weight:800; color:var(--white); margin-bottom:0.75rem; }
+.footer-brand-desc { font-size:0.85rem; line-height:1.7; max-width:220px; }
+.footer-col h4 { color:var(--white); font-size:0.9rem; font-weight:700; margin-bottom:1rem; }
+.footer-col ul { list-style:none; display:flex; flex-direction:column; gap:0.6rem; }
+.footer-col ul li a { font-size:0.85rem; transition:color .15s; }
+.footer-col ul li a:hover { color:var(--white); }
+.footer-bottom { max-width:1280px; margin:0 auto; padding-top:2rem; border-top:1px solid rgba(255,255,255,.1); display:flex; justify-content:space-between; align-items:center; font-size:0.82rem; flex-wrap:wrap; gap:0.75rem; }
+.footer-bottom span { color:rgba(255,255,255,.5); }
+
+/* ─── Misc ──────────────────────────────────────────────────────────────────── */
+.empty-state { text-align:center; padding:5rem 2rem; color:var(--slate-400); }
+.empty-state .ei { font-size:3.5rem; margin-bottom:1rem; }
+.divider { border:none; border-top:1px solid var(--slate-100); margin:2.5rem 0; }
+.chip { padding:0.25rem 0.6rem; border-radius:6px; font-size:0.72rem; font-weight:700; }
+
+/* ─── Responsive ────────────────────────────────────────────────────────────── */
+@media(max-width:1024px) {
+    .detail-grid,.cart-layout,.checkout-grid { grid-template-columns:1fr; }
+    .footer-grid { grid-template-columns:1fr 1fr; }
+    .stats-inner { grid-template-columns:repeat(2,1fr); }
+}
+@media(max-width:640px) {
+    .nav-search,.nav-links .nav-link:not(:last-child) { display:none; }
+    .hero-title { font-size:2rem; }
+    .promo-banner { text-align:center; justify-content:center; }
+    .cart-row { grid-template-columns:60px 1fr; }
+    .cart-row > *:nth-child(3),.cart-row > *:nth-child(4) { display:none; }
+    .footer-grid { grid-template-columns:1fr; }
+    .form-grid-2 { grid-template-columns:1fr; }
+}
+    </style>
+</head>
+<body>
+
+<!-- ── Toast container ──────────────────────────────────────────────────── -->
+<div id="toast-container"></div>
+
+<!-- ── Forge App root ───────────────────────────────────────────────────── -->
+<forge-app id="app"></forge-app>
+
+<!-- ── SSG product data (injected by inject.py at build time) ───────────── -->
+<script id="shopforge-products-data" type="application/json">
+[
+    {
+        "id": 1,
+        "name": "Wireless Noise-Cancelling Headphones",
+        "category": "electronics",
+        "price": 149.99,
+        "originalPrice": 199.99,
+        "rating": 4.8,
+        "reviews": 1247,
+        "stock": 23,
+        "featured": true,
+        "emoji": "\ud83c\udfa7",
+        "description": "Premium wireless headphones with industry-leading active noise cancellation. Enjoy 30 hours of playtime, multipoint connection, and a comfortable over-ear design perfect for travel and work.",
+        "tags": [
+            "bestseller",
+            "sale"
+        ],
+        "specs": {
+            "Driver": "40mm",
+            "Battery": "30 hrs",
+            "Connectivity": "Bluetooth 5.3",
+            "Water Resistance": "IPX4",
+            "Weight": "250g"
+        }
+    },
+    {
+        "id": 2,
+        "name": "4K Ultra-Wide Monitor 34\"",
+        "category": "electronics",
+        "price": 499.0,
+        "originalPrice": null,
+        "rating": 4.7,
+        "reviews": 384,
+        "stock": 8,
+        "featured": true,
+        "emoji": "\ud83d\udda5\ufe0f",
+        "description": "Stunning 34-inch ultra-wide curved display with 4K resolution, 144Hz refresh rate, and 1ms response time. Ideal for creative professionals and serious gamers.",
+        "tags": [
+            "new"
+        ],
+        "specs": {
+            "Resolution": "3440\u00d71440",
+            "Refresh Rate": "144Hz",
+            "Panel": "IPS",
+            "HDR": "HDR400",
+            "Ports": "2\u00d7 HDMI 2.1, 1\u00d7 DP 1.4"
+        }
+    },
+    {
+        "id": 3,
+        "name": "Mechanical Keyboard TKL",
+        "category": "electronics",
+        "price": 89.99,
+        "originalPrice": 119.99,
+        "rating": 4.9,
+        "reviews": 2108,
+        "stock": 45,
+        "featured": false,
+        "emoji": "\u2328\ufe0f",
+        "description": "Compact tenkeyless mechanical keyboard with hot-swappable switches, per-key RGB backlighting, and aircraft-grade aluminium case. Compatible with Windows and macOS.",
+        "tags": [
+            "bestseller",
+            "sale"
+        ],
+        "specs": {
+            "Layout": "TKL (87-key)",
+            "Switches": "Hot-swappable",
+            "Backlighting": "Per-key RGB",
+            "Connection": "USB-C / Wireless",
+            "Battery": "4000mAh"
+        }
+    },
+    {
+        "id": 4,
+        "name": "Wireless Charging Pad 15W",
+        "category": "electronics",
+        "price": 34.99,
+        "originalPrice": null,
+        "rating": 4.5,
+        "reviews": 672,
+        "stock": 60,
+        "featured": false,
+        "emoji": "\ud83d\udd0b",
+        "description": "Fast wireless charger compatible with all Qi-enabled devices. 15W fast charge for supported phones, slim profile, built-in foreign object detection, and LED indicator.",
+        "tags": [],
+        "specs": {
+            "Max Output": "15W",
+            "Compatibility": "Qi Universal",
+            "Input": "USB-C 18W",
+            "Diameter": "100mm",
+            "Cable": "1.5m included"
+        }
+    },
+    {
+        "id": 5,
+        "name": "Smart Home Security Camera",
+        "category": "electronics",
+        "price": 79.99,
+        "originalPrice": 99.99,
+        "rating": 4.6,
+        "reviews": 531,
+        "stock": 17,
+        "featured": false,
+        "emoji": "\ud83d\udcf7",
+        "description": "2K indoor security camera with colour night vision, two-way audio, AI motion detection, and local/cloud storage. Easy 2-minute setup, no hub required.",
+        "tags": [
+            "sale"
+        ],
+        "specs": {
+            "Resolution": "2K (2304\u00d71296)",
+            "Night Vision": "Colour",
+            "Storage": "microSD + Cloud",
+            "Audio": "Two-way",
+            "Power": "USB-C"
+        }
+    },
+    {
+        "id": 6,
+        "name": "Premium Cotton Crew T-Shirt",
+        "category": "clothing",
+        "price": 24.99,
+        "originalPrice": null,
+        "rating": 4.4,
+        "reviews": 3892,
+        "stock": 200,
+        "featured": true,
+        "emoji": "\ud83d\udc55",
+        "description": "Crafted from 100% organic combed cotton for unmatched softness and breathability. Pre-shrunk, reinforced collar, and available in 12 colours. Ethically made.",
+        "tags": [
+            "bestseller"
+        ],
+        "specs": {
+            "Material": "100% Organic Cotton",
+            "Fit": "Regular",
+            "Wash": "Machine wash 30\u00b0",
+            "Origin": "Fair Trade certified",
+            "Sizes": "XS\u20133XL"
+        }
+    },
+    {
+        "id": 7,
+        "name": "Slim Fit Chino Trousers",
+        "category": "clothing",
+        "price": 54.99,
+        "originalPrice": 79.99,
+        "rating": 4.5,
+        "reviews": 1023,
+        "stock": 85,
+        "featured": false,
+        "emoji": "\ud83d\udc56",
+        "description": "Modern slim-fit chinos in stretch cotton blend. Mid-rise waist, four-pocket design, and wrinkle-resistant finish. Versatile enough for office or weekend.",
+        "tags": [
+            "sale"
+        ],
+        "specs": {
+            "Material": "97% Cotton, 3% Elastane",
+            "Fit": "Slim",
+            "Rise": "Mid",
+            "Closure": "Button + zip",
+            "Sizes": "28\u201340 (W), 30\u201334 (L)"
+        }
+    },
+    {
+        "id": 8,
+        "name": "All-Terrain Running Shoes",
+        "category": "clothing",
+        "price": 119.99,
+        "originalPrice": null,
+        "rating": 4.7,
+        "reviews": 887,
+        "stock": 34,
+        "featured": true,
+        "emoji": "\ud83d\udc5f",
+        "description": "Engineered for road and trail alike. Responsive foam midsole, durable rubber outsole with multi-directional lugs, and breathable engineered mesh upper. Zero break-in needed.",
+        "tags": [
+            "new"
+        ],
+        "specs": {
+            "Upper": "Engineered Mesh",
+            "Midsole": "Responsive Foam",
+            "Outsole": "Trail Rubber",
+            "Drop": "8mm",
+            "Weight": "280g (size 9)"
+        }
+    },
+    {
+        "id": 9,
+        "name": "Merino Wool Crew Sweater",
+        "category": "clothing",
+        "price": 89.99,
+        "originalPrice": 129.99,
+        "rating": 4.6,
+        "reviews": 412,
+        "stock": 29,
+        "featured": false,
+        "emoji": "\ud83e\udde5",
+        "description": "Luxuriously soft 100% merino wool sweater \u2014 naturally temperature-regulating, odour-resistant, and machine washable. A timeless wardrobe essential.",
+        "tags": [
+            "sale"
+        ],
+        "specs": {
+            "Material": "100% Merino Wool",
+            "Weight": "200gsm",
+            "Fit": "Regular",
+            "Wash": "Machine wash cold",
+            "Origin": "ZQ Certified Merino"
+        }
+    },
+    {
+        "id": 10,
+        "name": "Clean Code by Robert Martin",
+        "category": "books",
+        "price": 34.99,
+        "originalPrice": null,
+        "rating": 4.9,
+        "reviews": 8204,
+        "stock": 120,
+        "featured": true,
+        "emoji": "\ud83d\udcd7",
+        "description": "A handbook of agile software craftsmanship. Learn how to write code that is readable, maintainable, and extensible. Essential reading for every professional developer.",
+        "tags": [
+            "bestseller"
+        ],
+        "specs": {
+            "Author": "Robert C. Martin",
+            "Pages": "431",
+            "Publisher": "Prentice Hall",
+            "Edition": "1st",
+            "Format": "Paperback / eBook"
+        }
+    },
+    {
+        "id": 11,
+        "name": "Designing Data-Intensive Applications",
+        "category": "books",
+        "price": 49.99,
+        "originalPrice": 59.99,
+        "rating": 4.9,
+        "reviews": 5612,
+        "stock": 67,
+        "featured": false,
+        "emoji": "\ud83d\udcd8",
+        "description": "The definitive guide to the principles, practices, and challenges of distributed systems. Covers databases, streams, batch processing, and everything in between.",
+        "tags": [
+            "bestseller",
+            "sale"
+        ],
+        "specs": {
+            "Author": "Martin Kleppmann",
+            "Pages": "616",
+            "Publisher": "O'Reilly Media",
+            "Edition": "1st",
+            "Format": "Paperback / eBook / PDF"
+        }
+    },
+    {
+        "id": 12,
+        "name": "Atomic Habits",
+        "category": "books",
+        "price": 19.99,
+        "originalPrice": null,
+        "rating": 4.8,
+        "reviews": 14530,
+        "stock": 200,
+        "featured": false,
+        "emoji": "\ud83d\udcd9",
+        "description": "An easy and proven way to build good habits and break bad ones. James Clear distils the most fundamental information about habit formation with clear examples.",
+        "tags": [
+            "bestseller"
+        ],
+        "specs": {
+            "Author": "James Clear",
+            "Pages": "319",
+            "Publisher": "Avery",
+            "Edition": "Revised",
+            "Format": "Hardcover / Paperback / Audio"
+        }
+    },
+    {
+        "id": 13,
+        "name": "The Pragmatic Programmer",
+        "category": "books",
+        "price": 39.99,
+        "originalPrice": 49.99,
+        "rating": 4.8,
+        "reviews": 4217,
+        "stock": 88,
+        "featured": false,
+        "emoji": "\ud83d\udcd5",
+        "description": "Your journey to mastery. From journeyman to master \u2014 pragmatic tips, tricks, and philosophy for creating clean, adaptive software that stands the test of time.",
+        "tags": [
+            "sale"
+        ],
+        "specs": {
+            "Authors": "David Thomas, Andrew Hunt",
+            "Pages": "352",
+            "Publisher": "Addison-Wesley",
+            "Edition": "20th Anniversary",
+            "Format": "Paperback / eBook"
+        }
+    },
+    {
+        "id": 14,
+        "name": "Barista Pro Coffee Maker",
+        "category": "home",
+        "price": 129.99,
+        "originalPrice": 179.99,
+        "rating": 4.7,
+        "reviews": 2341,
+        "stock": 12,
+        "featured": true,
+        "emoji": "\u2615",
+        "description": "Bean-to-cup espresso machine with integrated burr grinder, 15-bar pump, steam wand for milk frothing, and a 2L water tank. Barista-quality espresso at home.",
+        "tags": [
+            "bestseller",
+            "sale"
+        ],
+        "specs": {
+            "Pressure": "15 bar",
+            "Grinder": "Integrated Burr",
+            "Tank": "2L",
+            "Cups/hr": "~60",
+            "Dimensions": "32\u00d735\u00d740cm"
+        }
+    },
+    {
+        "id": 15,
+        "name": "Cast Iron Skillet 12\"",
+        "category": "home",
+        "price": 44.99,
+        "originalPrice": null,
+        "rating": 4.9,
+        "reviews": 3105,
+        "stock": 55,
+        "featured": false,
+        "emoji": "\ud83c\udf73",
+        "description": "Pre-seasoned 12-inch cast iron skillet \u2014 naturally non-stick, oven-safe to 500\u00b0C, and compatible with all hob types including induction. A kitchen workhorse for life.",
+        "tags": [
+            "bestseller"
+        ],
+        "specs": {
+            "Diameter": "12 inch (30cm)",
+            "Material": "Cast Iron",
+            "Pre-seasoned": "Yes",
+            "Oven Safe": "To 500\u00b0C",
+            "Hob": "All types inc. induction"
+        }
+    },
+    {
+        "id": 16,
+        "name": "Bamboo Kitchen Knife Set",
+        "category": "home",
+        "price": 69.99,
+        "originalPrice": 94.99,
+        "rating": 4.6,
+        "reviews": 784,
+        "stock": 31,
+        "featured": false,
+        "emoji": "\ud83d\udd2a",
+        "description": "Professional 7-piece kitchen knife set with high-carbon German steel blades, ergonomic handles, and bamboo block storage. Edge retention tested to 10,000 cuts.",
+        "tags": [
+            "sale"
+        ],
+        "specs": {
+            "Pieces": "7 (incl. block)",
+            "Steel": "High-Carbon German",
+            "Blade": "Full Tang",
+            "Handle": "Pakkawood",
+            "Hardness": "58 HRC"
+        }
+    },
+    {
+        "id": 17,
+        "name": "Smart Air Purifier HEPA",
+        "category": "home",
+        "price": 159.99,
+        "originalPrice": null,
+        "rating": 4.7,
+        "reviews": 1092,
+        "stock": 20,
+        "featured": false,
+        "emoji": "\ud83c\udf3f",
+        "description": "True HEPA + activated carbon filter removes 99.97% of particles as small as 0.3 microns. Wi-Fi enabled with real-time AQI display and automatic mode. Covers 500 sq ft.",
+        "tags": [
+            "new"
+        ],
+        "specs": {
+            "Coverage": "500 sq ft",
+            "Filter": "True HEPA + Carbon",
+            "CADR": "350 m\u00b3/hr",
+            "Noise": "22dB (sleep mode)",
+            "Control": "App + Voice"
+        }
+    },
+    {
+        "id": 18,
+        "name": "Premium Yoga Mat 6mm",
+        "category": "sports",
+        "price": 49.99,
+        "originalPrice": 69.99,
+        "rating": 4.8,
+        "reviews": 2563,
+        "stock": 75,
+        "featured": true,
+        "emoji": "\ud83e\uddd8",
+        "description": "Non-slip natural rubber yoga mat with alignment lines, moisture-wicking microfibre top, and carry strap. Perfect for yoga, pilates, and floor workouts.",
+        "tags": [
+            "bestseller",
+            "sale"
+        ],
+        "specs": {
+            "Thickness": "6mm",
+            "Material": "Natural Rubber + Microfibre",
+            "Dimensions": "183\u00d768cm",
+            "Weight": "2.4kg",
+            "Non-slip": "Both sides"
+        }
+    },
+    {
+        "id": 19,
+        "name": "Adjustable Dumbbell Set 5\u201325kg",
+        "category": "sports",
+        "price": 229.99,
+        "originalPrice": null,
+        "rating": 4.9,
+        "reviews": 1407,
+        "stock": 6,
+        "featured": false,
+        "emoji": "\ud83c\udfcb\ufe0f",
+        "description": "Space-saving adjustable dumbbell pair that replaces 9 sets of weights. Dial-select mechanism adjusts from 5 to 25kg in 2.5kg increments. Includes storage tray.",
+        "tags": [
+            "new"
+        ],
+        "specs": {
+            "Range": "5\u201325kg per dumbbell",
+            "Increment": "2.5kg",
+            "Material": "Zinc-plated steel",
+            "Dimensions": "41cm per dumbbell",
+            "Storage": "Tray included"
+        }
+    },
+    {
+        "id": 20,
+        "name": "GPS Cycling Computer",
+        "category": "sports",
+        "price": 169.99,
+        "originalPrice": 219.99,
+        "rating": 4.6,
+        "reviews": 693,
+        "stock": 14,
+        "featured": false,
+        "emoji": "\ud83d\udeb4",
+        "description": "Advanced GPS bike computer with colour touchscreen, route navigation, climb tracking, and 20-hour battery. Syncs with ANT+ & Bluetooth sensors and Strava.",
+        "tags": [
+            "sale"
+        ],
+        "specs": {
+            "Display": "3.5\" Colour Touchscreen",
+            "GPS": "Multi-band",
+            "Battery": "20 hrs",
+            "Sensors": "ANT+ & Bluetooth",
+            "Water Rating": "IPX7"
+        }
+    }
+]
+</script>
+
+<!-- ── Forge compiled components ────────────────────────────────────────── -->
+<script type="module" src="dist/ProductCard.forge.js"></script>
+<script type="module" src="dist/ProductDetail.forge.js"></script>
+<script type="module" src="dist/CheckoutForm.forge.js"></script>
+<script type="module" src="dist/App.forge.js"></script>
+
+<!-- ── App bootstrap ────────────────────────────────────────────────────── -->
+<script type="module">
+'use strict';
+
+/* ─── Cart ──────────────────────────────────────────────────────────────── */
+const Cart = {
+    _key: 'shopforge_cart',
+    get()  { try { return JSON.parse(localStorage.getItem(this._key)) || []; } catch { return []; } },
+    save(items) { localStorage.setItem(this._key, JSON.stringify(items)); },
+    add(id) {
+        const items = this.get();
+        const ex = items.find(i => i.id === id);
+        if (ex) ex.qty++; else items.push({ id, qty: 1 });
+        this.save(items);
+    },
+    remove(id) { this.save(this.get().filter(i => i.id !== id)); },
+    setQty(id, qty) {
+        if (qty <= 0) { this.remove(id); return; }
+        const items = this.get();
+        const it = items.find(i => i.id === id);
+        if (it) it.qty = qty;
+        this.save(items);
+    },
+    count()           { return this.get().reduce((s, i) => s + i.qty, 0); },
+    subtotal(prods)   { return this.get().reduce((s, i) => { const p = prods.find(x => x.id === i.id); return p ? s + p.price * i.qty : s; }, 0); },
+    items(prods)      { return this.get().map(i => ({ product: prods.find(x => x.id === i.id), qty: i.qty })).filter(i => i.product); },
+};
+
+/* ─── Helpers ────────────────────────────────────────────────────────────── */
+const fmtUSD = n => '$' + Number(n).toFixed(2);
+
+function toast(msg, type) {
+    const el = Object.assign(document.createElement('div'), { className: 'toast' + (type ? ' ' + type : ''), textContent: msg });
+    document.getElementById('toast-container').appendChild(el);
+    setTimeout(() => el.remove(), 3000);
+}
+
+/* ─── State ──────────────────────────────────────────────────────────────── */
+let allProducts = [];
+let searchQuery = '';
+const app = document.getElementById('app');
+
+function filterProducts(tag, q) {
+    let list = allProducts;
+    if (q) { const ql = q.toLowerCase(); list = list.filter(p => p.name.toLowerCase().includes(ql) || p.category.toLowerCase().includes(ql)); }
+    if (tag && tag !== 'all' && tag !== 0) { list = list.filter(p => Array.isArray(p.tags) ? p.tags.includes(tag) : String(p.tags).includes(tag)); }
+    return list;
+}
+
+function updateBadge() { app.cart_count = Cart.count(); }
+
+/* ─── Cart renderer ──────────────────────────────────────────────────────── */
+function renderCartPage() {
+    const root = document.getElementById('cart-items-root');
+    if (!root) return;
+    const items = Cart.items(allProducts);
+    if (!items.length) {
+        root.innerHTML = `<div class="empty-state"><div class="ei">🛒</div><p>Your cart is empty.</p>
+            <button class="btn btn-primary" id="ec-shop-btn">Browse Products</button></div>`;
+        document.getElementById('ec-shop-btn').onclick = () => { app.page = 1; };
+        return;
+    }
+    const sub = Cart.subtotal(allProducts), tax = sub * 0.08, total = sub + tax;
+    root.innerHTML = `
+        <div class="cart-layout">
+            <div id="cart-rows">
+                ${items.map(({ product: p, qty }) => `
+                <div class="cart-row" data-id="${p.id}">
+                    <div style="font-size:2.5rem;text-align:center">${p.emoji}</div>
+                    <div>
+                        <div style="font-weight:600;color:var(--slate-900)">${p.name}</div>
+                        <div style="font-size:.82rem;color:var(--slate-400)">${p.category}</div>
+                        <div style="font-size:.85rem;font-weight:700;color:var(--primary);margin-top:.25rem">${fmtUSD(p.price)}</div>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:.5rem">
+                        <button class="qty-btn" data-action="dec" data-id="${p.id}">−</button>
+                        <span style="min-width:1.5rem;text-align:center;font-weight:600">${qty}</span>
+                        <button class="qty-btn" data-action="inc" data-id="${p.id}">+</button>
+                    </div>
+                    <div style="font-weight:700">${fmtUSD(p.price * qty)}</div>
+                    <button class="qty-btn" style="font-size:.8rem" data-action="remove" data-id="${p.id}">✕</button>
+                </div>`).join('')}
+            </div>
+            <div class="order-summary" style="position:sticky;top:calc(var(--nav-h) + 1rem)">
+                <div class="summary-title">Order Summary</div>
+                ${items.map(({ product: p, qty }) => `
+                <div style="display:flex;gap:.75rem;align-items:center;padding:.6rem 0;border-bottom:1px solid var(--slate-100)">
+                    <div style="font-size:1.5rem">${p.emoji}</div>
+                    <div style="flex:1;min-width:0;font-size:.85rem;font-weight:600;color:var(--slate-900)">${p.name}</div>
+                    <div style="font-weight:700;font-size:.875rem">${fmtUSD(p.price * qty)}</div>
+                </div>`).join('')}
+                <hr class="summary-divider">
+                <div class="summary-row"><span>Subtotal</span><span>${fmtUSD(sub)}</span></div>
+                <div class="summary-row"><span>Shipping</span><span style="color:var(--green)">Free</span></div>
+                <div class="summary-row"><span>Tax (8%)</span><span>${fmtUSD(tax)}</span></div>
+                <hr class="summary-divider">
+                <div class="summary-total"><span>Total</span><span>${fmtUSD(total)}</span></div>
+                <button class="btn btn-primary btn-full" style="margin-top:1rem" id="checkout-btn">Proceed to Checkout</button>
+            </div>
+        </div>`;
+    document.getElementById('checkout-btn').onclick = () => { app.page = 4; };
+    root.addEventListener('click', e => {
+        const id = +e.target.dataset.id;
+        if (!id) return;
+        const action = e.target.dataset.action;
+        if (action === 'inc')    Cart.setQty(id, (Cart.get().find(i => i.id === id)?.qty || 0) + 1);
+        else if (action === 'dec')    Cart.setQty(id, (Cart.get().find(i => i.id === id)?.qty || 1) - 1);
+        else if (action === 'remove') Cart.remove(id);
+        else return;
+        updateBadge();
+        renderCartPage();
+    });
+}
+
+/* ─── Client-side Router (History API) ──────────────────────────────────── */
+const PAGE_PATHS = ['/', '/products', '/product', '/cart', '/checkout', '/about', '/contact'];
+const PATH_PAGE  = { '/': 0, '/home': 0, '/products': 1, '/cart': 3, '/checkout': 4, '/about': 5, '/contact': 6 };
+const PAGE_TITLE = [
+    'ShopForge — Home', 'ShopForge — Products', 'ShopForge — Product Detail',
+    'ShopForge — Cart', 'ShopForge — Checkout', 'ShopForge — About', 'ShopForge — Contact',
+];
+let _routerBusy = false;
+
+function pushRoute(page, selectedId) {
+    if (_routerBusy) return;
+    const path = page === 2 ? '/product/' + (selectedId || '') : (PAGE_PATHS[page] || '/');
+    if (window.location.pathname !== path) history.pushState(null, '', path);
+    document.title = PAGE_TITLE[page] || 'ShopForge';
+}
+
+function applyRoute(path) {
+    path = path || '/';
+    const m = path.match(/^\/product\/(\d+)$/);
+    _routerBusy = true;
+    if (m) {
+        app._state.selected_id = +m[1];
+        app._state.page = 2;
+        app._refresh();
+    } else {
+        const page = PATH_PAGE[path];
+        if (page !== undefined) {
+            app._state.page = page;
+            app._refresh();
+        }
+    }
+    _routerBusy = false;
+}
+
+window.addEventListener('popstate', () => applyRoute(window.location.pathname));
+
+/* ─── Component intercepts + initial routing ─────────────────────────────── */
+customElements.whenDefined('forge-app').then(() => {
+
+    /* filter_tag setter — re-filter products and navigate to products page from home */
+    Object.defineProperty(app, 'filter_tag', {
+        get() { return this._state.filter_tag; },
+        set(val) {
+            this._state.filter_tag = val;
+            if (this._state.page === 0) this._state.page = 1;
+            this._state.products = filterProducts(val, searchQuery);
+            this._refresh();
+        },
+        configurable: true,
+    });
+
+    /* Patch _refresh — push hash URL on every page navigation, render cart on page 3 */
+    let _lastPage = app._state.page;
+    let _lastId   = app._state.selected_id;
+    const origRefresh = app._refresh.bind(app);
+    app._refresh = function() {
+        origRefresh();
+        const pg = this._state.page;
+        const id = this._state.selected_id;
+        const pageChanged = pg !== _lastPage;
+        const idChanged   = pg === 2 && id !== _lastId;
+        if (pageChanged || idChanged) {
+            if (pg === 3 && _lastPage !== 3) setTimeout(renderCartPage, 0);
+            _lastPage = pg;
+            _lastId   = id;
+            pushRoute(pg, id);
+        }
+    };
+
+    /* Apply initial route from URL path */
+    const initPath = window.location.pathname;
+    if (initPath !== '/') applyRoute(initPath);
+});
+
+/* ─── CustomEvent handlers (dispatched by child Forge components) ────────── */
+window.addEventListener('forge:add-to-cart', e => {
+    const p = allProducts.find(x => x.id === e.detail.id);
+    if (!p) return;
+    if (p.stock === 0) { toast('Out of stock'); return; }
+    Cart.add(e.detail.id);
+    updateBadge();
+    toast(p.name + ' added to cart', 'success');
+});
+
+window.addEventListener('forge:view-product', e => {
+    app.selected_id = e.detail.id;
+    app.page = 2;
+});
+
+window.addEventListener('forge:go-products', () => { app.page = 1; });
+
+window.addEventListener('forge:order-placed', () => {
+    localStorage.removeItem('shopforge_cart');
+    updateBadge();
+});
+
+/* ─── Search (delegated — input lives inside <forge-app>) ────────────────── */
+app.addEventListener('keydown', e => {
+    if (e.target.id === 'nav-search-input' && e.key === 'Enter') {
+        searchQuery = e.target.value.trim();
+        app.products = filterProducts(app.filter_tag, searchQuery);
+        app.page = 1;
+    }
+});
+
+/* ─── Bootstrap ──────────────────────────────────────────────────────────── */
+const dataEl = document.getElementById('shopforge-products-data');
+if (dataEl) {
+    allProducts = JSON.parse(dataEl.textContent);
+    app.products = allProducts;
+}
+
+updateBadge();
+
+/* Background API refresh */
+(async () => {
+    try {
+        const res = await fetch('api/products.json');
+        if (res.ok) {
+            allProducts = await res.json();
+            app.products = filterProducts(app.filter_tag || 'all', searchQuery);
+            updateBadge();
+        }
+    } catch { /* SSG data is fallback */ }
+})();
+</script>
+</body>
+</html>

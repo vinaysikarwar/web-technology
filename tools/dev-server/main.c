@@ -203,6 +203,14 @@ static void handle_request(int fd) {
     /* Security: prevent path traversal */
     if (strstr(full_path, "..")) { send_404(fd); close(fd); return; }
 
+    /* SPA fallback — serve index.html for routes that have no file extension */
+    {
+        struct stat _spa_st;
+        if (stat(full_path, &_spa_st) != 0 && strrchr(path + 1, '.') == NULL) {
+            snprintf(full_path, sizeof(full_path), "%sindex.html", _dir);
+        }
+    }
+
     send_file(fd, full_path);
     close(fd);
 }

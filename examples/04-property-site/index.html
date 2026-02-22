@@ -7,64 +7,760 @@
     <title>ForgeEstates — Premium Property Listings</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap"
-        rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        /* ── Reset ────────────────────────────────────────────────────────── */
+        *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: 'Plus Jakarta Sans', sans-serif; background: #f8fafc; color: #1e293b; overflow-x: hidden; }
+        a { text-decoration: none; color: inherit; }
+        button { font-family: inherit; cursor: pointer; }
 
-        body {
-            font-family: 'Plus Jakarta Sans', sans-serif;
-            background-color: #f8fafc;
-            color: #1e293b;
-            overflow-x: hidden;
+        /* ── Navbar ──────────────────────────────────────────────────────── */
+        .navbar { background: #fff; border-bottom: 1px solid #e2e8f0; position: sticky; top: 0; z-index: 100; }
+        .nav-inner { max-width: 1200px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; padding: 0 1.5rem; height: 68px; }
+        .nav-brand { display: flex; align-items: center; gap: 0.5rem; }
+        .nav-logo { font-size: 1.5rem; }
+        .nav-title { font-weight: 800; font-size: 1.2rem; color: #0f172a; }
+        .nav-links { display: flex; align-items: center; gap: 0.25rem; }
+        .nav-link { padding: 0.5rem 1rem; border-radius: 8px; color: #64748b; font-weight: 500; font-size: 0.925rem; transition: all 0.15s; }
+        .nav-link:hover { background: #f1f5f9; color: #0f172a; }
+        .nav-link.active { background: #eff0fe; color: #6366f1; font-weight: 600; }
+        .nav-cta { padding: 0.5rem 1.25rem; background: #6366f1; color: #fff; border-radius: 8px; font-weight: 600; font-size: 0.925rem; transition: background 0.15s; margin-left: 0.5rem; }
+        .nav-cta:hover { background: #4f46e5; color: #fff; }
+
+        /* ── Page container ──────────────────────────────────────────────── */
+        #page-root { min-height: calc(100vh - 68px); }
+
+        /* ── Hero ────────────────────────────────────────────────────────── */
+        .hero { padding: 5rem 1.5rem; background: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%); text-align: center; }
+        .hero-content { max-width: 760px; margin: 0 auto; }
+        .hero-badge { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 1rem; background: #fff; border-radius: 99px; color: #6366f1; font-weight: 600; font-size: 0.85rem; margin-bottom: 1.5rem; box-shadow: 0 2px 12px rgba(99,102,241,0.15); }
+        .hero-title { font-size: clamp(2.2rem, 5vw, 3.5rem); font-weight: 800; color: #0f172a; margin-bottom: 1.25rem; line-height: 1.1; }
+        .hero-title span { color: #6366f1; }
+        .hero-subtitle { font-size: 1.1rem; color: #64748b; line-height: 1.7; max-width: 560px; margin: 0 auto 2rem; }
+        .hero-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+        .btn-primary { padding: 0.875rem 2rem; background: #6366f1; color: #fff; border: none; border-radius: 10px; font-weight: 700; font-size: 1rem; transition: background 0.15s; }
+        .btn-primary:hover { background: #4f46e5; }
+        .btn-outline { padding: 0.875rem 2rem; background: #fff; color: #0f172a; border: 1.5px solid #e2e8f0; border-radius: 10px; font-weight: 600; font-size: 1rem; transition: border-color 0.15s; }
+        .btn-outline:hover { border-color: #6366f1; color: #6366f1; }
+
+        /* ── Stats strip ─────────────────────────────────────────────────── */
+        .stats-strip { background: #fff; border-top: 1px solid #f1f5f9; border-bottom: 1px solid #f1f5f9; padding: 2rem 1.5rem; }
+        .stats-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; text-align: center; }
+        .stat-value { font-size: 2rem; font-weight: 800; color: #0f172a; }
+        .stat-label { font-size: 0.875rem; color: #64748b; margin-top: 0.25rem; }
+
+        /* ── Section ────────────────────────────────────────────────────── */
+        .section { padding: 4rem 1.5rem; max-width: 1200px; margin: 0 auto; }
+        .section-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2.5rem; flex-wrap: wrap; gap: 1rem; }
+        .section-title { font-size: 1.875rem; font-weight: 700; color: #0f172a; }
+        .section-subtitle { color: #64748b; margin-top: 0.375rem; font-size: 0.95rem; }
+        .section-link { color: #6366f1; font-weight: 600; font-size: 0.9rem; }
+        .section-link:hover { text-decoration: underline; }
+
+        /* ── Filter bar ─────────────────────────────────────────────────── */
+        .filter-bar { display: flex; gap: 0.5rem; background: #f1f5f9; padding: 0.35rem; border-radius: 12px; flex-wrap: wrap; }
+        .filter-btn { padding: 0.45rem 1.25rem; border: none; background: transparent; border-radius: 8px; font-weight: 600; font-size: 0.875rem; color: #64748b; transition: all 0.15s; }
+        .filter-btn.active { background: #fff; color: #0f172a; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+
+        /* ── Property Grid ──────────────────────────────────────────────── */
+        .property-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.75rem; }
+
+        /* ── Property Card (forge-property-card host styles) ─────────────── */
+        .property-card-wrap { cursor: pointer; display: block; }
+        forge-property-card { display: block; }
+        .property-card { background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 24px rgba(0,0,0,0.07); transition: transform 0.2s, box-shadow 0.2s; }
+        .property-card:hover { transform: translateY(-4px); box-shadow: 0 12px 36px rgba(0,0,0,0.12); }
+        .card-image { height: 210px; background: linear-gradient(135deg, #6366f1, #8b5cf6); display: flex; align-items: center; justify-content: center; font-size: 4rem; position: relative; }
+        .card-badge { position: absolute; top: 1rem; right: 1rem; padding: 0.25rem 0.75rem; border-radius: 99px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
+        .badge-sale { background: #dcfce7; color: #16a34a; }
+        .badge-rent { background: #dbeafe; color: #2563eb; }
+        .card-body { padding: 1.5rem; }
+        .card-title { font-size: 1.125rem; font-weight: 700; color: #0f172a; margin-bottom: 0.375rem; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+        .card-location { color: #64748b; font-size: 0.875rem; margin-bottom: 1rem; }
+        .card-price { font-size: 1.375rem; font-weight: 800; color: #6366f1; margin-bottom: 1rem; }
+        .card-details { display: flex; gap: 1rem; flex-wrap: wrap; font-size: 0.82rem; color: #64748b; padding-top: 0.875rem; border-top: 1px solid #f1f5f9; }
+
+        /* ── Property Detail ────────────────────────────────────────────── */
+        .detail-page { padding: 2.5rem 1.5rem; max-width: 1200px; margin: 0 auto; animation: fadeIn 0.3s ease; }
+        .detail-breadcrumb { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 2rem; font-size: 0.9rem; color: #64748b; }
+        .detail-breadcrumb a { color: #6366f1; font-weight: 500; }
+        .detail-breadcrumb a:hover { text-decoration: underline; }
+        .detail-grid { display: grid; grid-template-columns: 1fr 380px; gap: 2.5rem; align-items: start; }
+        .detail-image { height: 420px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 7rem; margin-bottom: 2rem; }
+        .detail-title { font-size: 2rem; font-weight: 800; color: #0f172a; margin-bottom: 0.5rem; }
+        .detail-location { color: #64748b; font-size: 1rem; margin-bottom: 1.5rem; }
+        .detail-desc-box { background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+        .detail-desc-box h2 { font-size: 1.125rem; font-weight: 700; margin-bottom: 0.875rem; color: #0f172a; }
+        .detail-desc-box p { color: #64748b; line-height: 1.75; }
+        .price-card { background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 24px rgba(0,0,0,0.06); margin-bottom: 1.5rem; }
+        .price-value { font-size: 2.25rem; font-weight: 800; color: #6366f1; }
+        .price-label { color: #64748b; font-size: 0.875rem; margin: 0.25rem 0 1.5rem; }
+        .specs-card { background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+        .specs-card h3 { font-size: 1rem; font-weight: 700; color: #0f172a; margin-bottom: 1rem; }
+        .spec-row { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 0; border-bottom: 1px solid #f1f5f9; font-size: 0.9rem; }
+        .spec-row:last-child { border-bottom: none; }
+        .spec-row span { color: #64748b; }
+        .spec-row strong { color: #0f172a; font-weight: 600; }
+        .similar-section { margin-top: 4rem; padding-top: 3rem; border-top: 1px solid #e2e8f0; }
+
+        /* ── About page ─────────────────────────────────────────────────── */
+        .about-hero { padding: 5rem 1.5rem 3rem; background: linear-gradient(135deg, #eff6ff 0%, #f5f3ff 100%); text-align: center; }
+        .about-grid { max-width: 1200px; margin: 0 auto; padding: 4rem 1.5rem; display: grid; grid-template-columns: 1fr 1fr; gap: 4rem; align-items: center; }
+        .about-img { height: 360px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 20px; display: flex; align-items: center; justify-content: center; font-size: 8rem; }
+        .about-text h2 { font-size: 2rem; font-weight: 800; color: #0f172a; margin-bottom: 1rem; }
+        .about-text p { color: #64748b; line-height: 1.8; margin-bottom: 1.25rem; }
+        .value-list { list-style: none; display: flex; flex-direction: column; gap: 0.75rem; margin-top: 1.5rem; }
+        .value-list li { display: flex; align-items: center; gap: 0.75rem; color: #374151; font-weight: 500; }
+        .value-list li::before { content: '✓'; width: 24px; height: 24px; background: #eff0fe; color: #6366f1; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.8rem; flex-shrink: 0; }
+
+        /* ── Agents page ────────────────────────────────────────────────── */
+        .agents-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 2rem; }
+        .agent-card { background: #fff; border-radius: 16px; padding: 2rem; text-align: center; box-shadow: 0 4px 24px rgba(0,0,0,0.06); transition: transform 0.2s; }
+        .agent-card:hover { transform: translateY(-4px); }
+        .agent-avatar { width: 80px; height: 80px; border-radius: 50%; margin: 0 auto 1rem; display: flex; align-items: center; justify-content: center; font-size: 2.5rem; }
+        .agent-name { font-size: 1.125rem; font-weight: 700; color: #0f172a; margin-bottom: 0.25rem; }
+        .agent-role { color: #6366f1; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.75rem; }
+        .agent-bio { color: #64748b; font-size: 0.875rem; line-height: 1.6; margin-bottom: 1rem; }
+        .agent-stats { display: flex; justify-content: center; gap: 1.5rem; padding-top: 1rem; border-top: 1px solid #f1f5f9; }
+        .agent-stat span { font-size: 1.125rem; font-weight: 700; color: #0f172a; display: block; }
+        .agent-stat small { font-size: 0.75rem; color: #64748b; }
+
+        /* ── Contact page ───────────────────────────────────────────────── */
+        .contact-layout { display: grid; grid-template-columns: 1fr 1.4fr; gap: 4rem; align-items: start; }
+        .contact-info h2 { font-size: 2rem; font-weight: 800; color: #0f172a; margin-bottom: 1rem; }
+        .contact-info p { color: #64748b; line-height: 1.75; margin-bottom: 2rem; }
+        .contact-detail-list { display: flex; flex-direction: column; gap: 1rem; }
+        .contact-detail-item { display: flex; align-items: center; gap: 0.875rem; }
+        .contact-detail-icon { width: 42px; height: 42px; background: #eff0fe; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; flex-shrink: 0; }
+        .contact-detail-text strong { display: block; font-weight: 600; color: #0f172a; font-size: 0.875rem; }
+        .contact-detail-text span { color: #64748b; font-size: 0.875rem; }
+        .contact-form-box { background: #fff; border-radius: 20px; padding: 2.5rem; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+        .form-title { font-size: 1.375rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; }
+        .form-subtitle { color: #64748b; font-size: 0.9rem; margin-bottom: 1.75rem; }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+        .form-group { margin-bottom: 1.125rem; }
+        .form-label { display: block; font-size: 0.875rem; font-weight: 600; color: #374151; margin-bottom: 0.4rem; }
+        .form-input, .form-textarea, .form-select { width: 100%; padding: 0.75rem 1rem; border: 1.5px solid #e2e8f0; border-radius: 10px; font-size: 0.9rem; font-family: inherit; color: #1e293b; outline: none; transition: border-color 0.15s; background: #fff; }
+        .form-input:focus, .form-textarea:focus, .form-select:focus { border-color: #6366f1; }
+        .form-textarea { resize: vertical; min-height: 110px; }
+        .form-submit { width: 100%; padding: 0.875rem; background: #6366f1; color: #fff; border: none; border-radius: 10px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: background 0.15s; }
+        .form-submit:hover { background: #4f46e5; }
+        .success-box { text-align: center; padding: 2rem; }
+        .success-icon { font-size: 3.5rem; margin-bottom: 1rem; }
+
+        /* ── Contact Form (forge-contact-form host) ──────────────────────── */
+        .contact-form-inner { }
+        .form-header { margin-bottom: 1.5rem; }
+        .btn-submit { width: 100%; padding: 0.875rem; background: #6366f1; color: #fff; border: none; border-radius: 10px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: background 0.15s; font-family: inherit; }
+        .btn-submit:hover { background: #4f46e5; }
+        .btn-reset { padding: 0.75rem 2rem; background: transparent; border: 1.5px solid #6366f1; color: #6366f1; border-radius: 10px; font-weight: 600; cursor: pointer; font-family: inherit; }
+        .success-icon { font-size: 3rem; margin-bottom: 1rem; }
+
+        /* ── Dark CTA section ───────────────────────────────────────────── */
+        .cta-section { background: #0f172a; color: #fff; padding: 5rem 1.5rem; text-align: center; }
+        .cta-section h2 { font-size: 2.5rem; font-weight: 800; margin-bottom: 1rem; }
+        .cta-section p { color: #94a3b8; font-size: 1.1rem; margin-bottom: 2rem; }
+        .cta-actions { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+        .btn-white { padding: 0.875rem 2rem; background: #fff; color: #0f172a; border: none; border-radius: 10px; font-weight: 700; font-size: 1rem; transition: background 0.15s; }
+        .btn-white:hover { background: #e2e8f0; }
+        .btn-ghost { padding: 0.875rem 2rem; background: transparent; color: #fff; border: 1.5px solid rgba(255,255,255,0.3); border-radius: 10px; font-weight: 600; font-size: 1rem; transition: border-color 0.15s; }
+        .btn-ghost:hover { border-color: #fff; }
+
+        /* ── Features / Why Us ──────────────────────────────────────────── */
+        .features-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 2rem; }
+        .feature-card { background: #fff; border-radius: 16px; padding: 2rem; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+        .feature-icon { font-size: 2rem; margin-bottom: 1rem; }
+        .feature-title { font-size: 1.125rem; font-weight: 700; color: #0f172a; margin-bottom: 0.5rem; }
+        .feature-text { color: #64748b; line-height: 1.6; font-size: 0.9rem; }
+
+        /* ── Footer ─────────────────────────────────────────────────────── */
+        footer { background: #fff; border-top: 1px solid #e2e8f0; padding: 3rem 1.5rem; }
+        .footer-inner { max-width: 1200px; margin: 0 auto; display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 3rem; }
+        .footer-brand { }
+        .footer-logo { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+        .footer-desc { color: #64748b; font-size: 0.875rem; line-height: 1.7; max-width: 240px; }
+        .footer-col h4 { font-weight: 700; color: #0f172a; margin-bottom: 1rem; font-size: 0.95rem; }
+        .footer-col ul { list-style: none; display: flex; flex-direction: column; gap: 0.625rem; }
+        .footer-col ul li a { color: #64748b; font-size: 0.875rem; transition: color 0.15s; }
+        .footer-col ul li a:hover { color: #6366f1; }
+        .footer-bottom { max-width: 1200px; margin: 2rem auto 0; padding-top: 1.5rem; border-top: 1px solid #f1f5f9; display: flex; justify-content: space-between; align-items: center; color: #94a3b8; font-size: 0.825rem; flex-wrap: wrap; gap: 0.5rem; }
+
+        /* ── Empty state ────────────────────────────────────────────────── */
+        .empty-state { text-align: center; padding: 4rem 2rem; color: #64748b; }
+        .empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+
+        /* ── Animations ─────────────────────────────────────────────────── */
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+        .fade-in { animation: fadeIn 0.3s ease; }
+
+        /* ── Responsive ─────────────────────────────────────────────────── */
+        @media (max-width: 900px) {
+            .detail-grid, .about-grid, .contact-layout { grid-template-columns: 1fr; }
+            .features-grid { grid-template-columns: 1fr 1fr; }
+            .stats-inner { grid-template-columns: repeat(2, 1fr); }
+            .footer-inner { grid-template-columns: 1fr 1fr; }
+        }
+        @media (max-width: 600px) {
+            .nav-links { display: none; }
+            .hero-title { font-size: 2rem; }
+            .features-grid { grid-template-columns: 1fr; }
+            .form-row { grid-template-columns: 1fr; }
         }
     </style>
 </head>
 
 <body>
 
-    <!-- Forge components render here via Custom Elements -->
-    <forge-app><div data-fid="0" class="property-app"><style data-fid="1">.navbar <span data-fexpr="3"></span>.nav-inner <span data-fexpr="5"></span>.nav-brand <span data-fexpr="7"></span>.nav-logo <span data-fexpr="9"></span>.nav-title <span data-fexpr="11"></span>.nav-links <span data-fexpr="13"></span>.nav-link <span data-fexpr="15"></span>.nav-link.active <span data-fexpr="17"></span>.hero <span data-fexpr="19"></span>.hero-content <span data-fexpr="21"></span>.hero-badge <span data-fexpr="23"></span>.hero-title <span data-fexpr="25"></span>.hero-subtitle <span data-fexpr="27"></span>.properties-section <span data-fexpr="29"></span>.section-header <span data-fexpr="31"></span>.section-title <span data-fexpr="33"></span>.filter-bar <span data-fexpr="35"></span>.filter-btn <span data-fexpr="37"></span>.filter-btn.active <span data-fexpr="39"></span>.property-grid <span data-fexpr="41"></span>.detail-section <span data-fexpr="43"></span>.detail-nav <span data-fexpr="45"></span>.back-link <span data-fexpr="47"></span>.contact-section <span data-fexpr="49"></span>.contact-inner <span data-fexpr="51"></span>.contact-heading <span data-fexpr="53"></span>.site-footer <span data-fexpr="55"></span>@keyframes fadeIn <span data-fexpr="57"></span></style><nav data-fid="58" class="navbar"><div data-fid="59" class="nav-inner"><div data-fid="60" class="nav-brand"><span data-fid="61" class="nav-logo">🏡</span><span data-fid="63" class="nav-title">ForgeEstates</span></div><div data-fid="65" class="nav-links"><a data-fid="66" href="#">Properties</a><a data-fid="68" class="nav-link" href="#contact">Contact</a></div></div></nav><div data-fif="70" style="display:contents"><section data-fid="71" class="hero"><div data-fid="72" class="hero-content"><span data-fid="73" class="hero-badge">⚡ Powered by Forge WASM</span><h1 data-fid="75" class="hero-title">FindYourDreamHome</h1><p data-fid="80" class="hero-subtitle">Discoverluxurypropertiescraftedformodernliving. Browse our curated collection of homes, apartments, and premium estates.
-                        </p></div></section><section data-fid="89" class="properties-section" id="properties"><div data-fid="90" class="section-header"><h2 data-fid="91" class="section-title">FeaturedProperties</h2><div data-fid="94" class="filter-bar"><button data-fid="95">All</button><button data-fid="97">ForSale</button><button data-fid="100">ForRent</button></div></div><div data-fid="103" class="property-grid"></div></section></div><div data-fif="105" style="display:contents"><section data-fid="106" class="detail-section"></section></div><section data-fid="108" class="contact-section" id="contact"><div data-fid="109" class="contact-inner"><div data-fid="110" class="contact-info"><h2 data-fid="111" class="contact-heading">ReadytoMoveIn?</h2><div data-fid="117" class="contact-details"><div data-fid="118" class="contact-detail-item"><span data-fid="119">📞 +1 (555) 234-5678</span></div></div></div><div data-fid="121" class="contact-form-wrap"><forge-contact-form data-fid="122" property_title="General Inquiry"><div data-fid="0" class="contact-form-inner"><div data-fid="1" class="form-header"><h2 data-fid="2" class="form-title">📬 Get in Touch</h2><p data-fid="4" class="form-subtitle">Interestedinaproperty? Fill out the form below and our agent will contact you shortly.
-                </p></div><div data-fid="10"><div data-fid="11" class="success-icon">✅</div><h3 data-fid="13">ThankYou!</h3><p data-fid="17">Yourinquiryhasbeensubmitted. We will get back to you within 24 hours.</p><button data-fid="24" class="btn-reset">SendAnotherInquiry</button></div><div data-fid="28"><div data-fid="29" class="form-row"><div data-fid="30" class="form-group"><label data-fid="31" class="form-label">FullName*</label><input data-fid="35" type="text" class="form-input" placeholder="John Smith"></input></div><div data-fid="36" class="form-group"><label data-fid="37" class="form-label">EmailAddress*</label><input data-fid="41" type="email" class="form-input" placeholder="john@example.com"></input></div></div><div data-fid="42" class="form-group"><label data-fid="43" class="form-label">PhoneNumber</label><input data-fid="46" type="tel" class="form-input" placeholder="+1 (555) 000-0000"></input></div><div data-fid="47" class="form-group"><label data-fid="48" class="form-label">Message*</label><textarea data-fid="51" class="form-textarea" placeholder="I am interested in this property..." rows="4"></textarea></div><button data-fid="52" class="btn-submit">SendInquiry→
-                </button></div></div></forge-contact-form></div></div></section><footer data-fid="123" class="site-footer"><div data-fid="124" class="footer-inner"><span data-fid="125" class="footer-title">ForgeEstates</span><p data-fid="127" class="footer-copy">BuiltwithForgeFramework</p></div></footer></div></forge-app>
+    <!-- ── Navigation ──────────────────────────────────────────────────── -->
+    <nav class="navbar">
+        <div class="nav-inner">
+            <a href="/" class="nav-brand" data-link>
+                <span class="nav-logo">🏡</span>
+                <span class="nav-title">ForgeEstates</span>
+            </a>
+            <div class="nav-links">
+                <a href="/"           class="nav-link" data-link data-nav>Home</a>
+                <a href="/properties" class="nav-link" data-link data-nav>Properties</a>
+                <a href="/agents"     class="nav-link" data-link data-nav>Agents</a>
+                <a href="/about"      class="nav-link" data-link data-nav>About</a>
+                <a href="/contact"    class="nav-cta"  data-link data-nav>Contact Us</a>
+            </div>
+        </div>
+    </nav>
 
-    <!-- API Data Fetching Script -->
+    <!-- ── Page mount point ────────────────────────────────────────────── -->
+    <main id="page-root"></main>
+
+    <!-- ── Footer (always visible) ─────────────────────────────────────── -->
+    <footer>
+        <div class="footer-inner">
+            <div class="footer-brand">
+                <div class="footer-logo">
+                    <span style="font-size:1.4rem">🏡</span>
+                    <span style="font-weight:800;color:#0f172a;font-size:1.1rem">ForgeEstates</span>
+                </div>
+                <p class="footer-desc">Premium property listings for buyers, sellers, and renters across the country.</p>
+            </div>
+            <div class="footer-col">
+                <h4>Properties</h4>
+                <ul>
+                    <li><a href="/properties" data-link>All Listings</a></li>
+                    <li><a href="/properties?type=sale" data-link>For Sale</a></li>
+                    <li><a href="/properties?type=rent" data-link>For Rent</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Company</h4>
+                <ul>
+                    <li><a href="/about"   data-link>About Us</a></li>
+                    <li><a href="/agents"  data-link>Our Agents</a></li>
+                    <li><a href="/contact" data-link>Contact</a></li>
+                </ul>
+            </div>
+            <div class="footer-col">
+                <h4>Support</h4>
+                <ul>
+                    <li><a href="/contact" data-link>Help Centre</a></li>
+                    <li><a href="/contact" data-link>Privacy Policy</a></li>
+                    <li><a href="/contact" data-link>Terms of Use</a></li>
+                </ul>
+            </div>
+        </div>
+        <div class="footer-bottom">
+            <span>© 2026 ForgeEstates. Built with <strong>Forge Framework</strong> — C → WebAssembly.</span>
+            <span>⚡ <20ms first paint</span>
+        </div>
+    </footer>
+
+    <!-- ── SSG_DATA: inject_ssg.py inserts api/properties.json here ──── -->
+    <script id="forge-properties-data" type="application/json">
+[
+    {
+        "id": 1,
+        "title": "Modern Villa with Pool",
+        "location": "Beverly Hills, CA",
+        "price": 2450000,
+        "bedrooms": 5,
+        "bathrooms": 4,
+        "area": 4200,
+        "type": "sale",
+        "featured": 1,
+        "description": "This stunning modern villa features an open-concept design with floor-to-ceiling windows, a private infinity pool, and breathtaking views of the city. Perfect for luxury entertainment and comfortable living."
+    },
+    {
+        "id": 2,
+        "title": "Downtown Luxury Penthouse",
+        "location": "Manhattan, NY",
+        "price": 8500,
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "area": 2100,
+        "type": "rent",
+        "featured": 0,
+        "description": "Experience the ultimate city lifestyle in this exquisite penthouse located in the heart of Manhattan. Featuring high-end finishes, a designer kitchen, and a private terrace overlooking the skyline."
+    },
+    {
+        "id": 3,
+        "title": "Cozy Suburban Family Home",
+        "location": "Austin, TX",
+        "price": 485000,
+        "bedrooms": 4,
+        "bathrooms": 3,
+        "area": 2800,
+        "type": "sale",
+        "featured": 0,
+        "description": "A beautiful family home in a quiet suburban neighborhood. Large backyard, updated kitchen, and spacious living areas make this the perfect place to raise a family."
+    },
+    {
+        "id": 4,
+        "title": "Beachfront Studio Apartment",
+        "location": "Miami, FL",
+        "price": 3200,
+        "bedrooms": 1,
+        "bathrooms": 1,
+        "area": 650,
+        "type": "rent",
+        "featured": 1,
+        "description": "Steps away from the sand, this beachfront studio offers modern amenities and spectacular ocean views. Ideal for a vacation home or a minimalist coastal lifestyle."
+    },
+    {
+        "id": 5,
+        "title": "Mountain Retreat Cabin",
+        "location": "Aspen, CO",
+        "price": 1200000,
+        "bedrooms": 3,
+        "bathrooms": 2,
+        "area": 1800,
+        "type": "sale",
+        "featured": 0,
+        "description": "A rustic yet luxurious cabin nestled in the heart of the Rocky Mountains. Features a stone fireplace, cedar finishings, and easy access to world-class skiing."
+    },
+    {
+        "id": 6,
+        "title": "Urban Loft with City Views",
+        "location": "Chicago, IL",
+        "price": 4200,
+        "bedrooms": 2,
+        "bathrooms": 1,
+        "area": 1200,
+        "type": "rent",
+        "featured": 0,
+        "description": "Modern industrial loft with exposed brick, high ceilings, and massive windows. Located in a vibrant neighborhood with plenty of dining and nightlife options."
+    }
+]
+</script>
+
+    <!-- ── App Script ───────────────────────────────────────────────────── -->
     <script type="module">
-        async function init() {
+
+        // ── 1. Load properties (from SSG-inlined data or live API) ────────
+        const dataEl   = document.getElementById('forge-properties-data');
+        let properties = dataEl ? JSON.parse(dataEl.textContent) : [];
+
+        // Background refresh from live API
+        (async () => {
             try {
-                const response = await fetch('api/properties.json');
-                const properties = await response.json();
+                const res = await fetch('api/properties.json');
+                if (res.ok) { properties = await res.json(); router.resolve(); }
+            } catch { /* inlined SSG data is the fallback */ }
+        })();
 
-                // Wait for custom element to be defined
-                await customElements.whenDefined('forge-app');
-                const app = document.querySelector('forge-app');
+        // ── 2. Helpers ────────────────────────────────────────────────────
+        const root = document.getElementById('page-root');
+        const fmt  = (n) => `$${Number(n).toLocaleString()}`;
 
-                // Inject properties into the component state
-                if (app) {
-                    // We must ensure the component is hydrated before setting state
-                    // or set it in a way that triggers a refresh
-                    app.properties = properties;
-                    // Trigger a manual refresh if needed, but Forge components should observe this
-                    if (app._refresh) app._refresh();
-                }
-            } catch (e) {
-                console.error("Failed to load properties:", e);
-            }
+        function createPropertyCard(p) {
+            const wrap = document.createElement('div');
+            wrap.className = 'property-card-wrap';
+            wrap.innerHTML = `
+                <div class="property-card">
+                    <div class="card-image">
+                        🏠
+                        <span class="card-badge badge-${p.type}">${p.type === 'rent' ? 'For Rent' : 'For Sale'}</span>
+                    </div>
+                    <div class="card-body">
+                        <div class="card-title" title="${p.title}">${p.title}</div>
+                        <div class="card-location">📍 ${p.location}</div>
+                        <div class="card-price">${fmt(p.price)}${p.type === 'rent' ? '/mo' : ''}</div>
+                        <div class="card-details">
+                            <span>🛏 ${p.bedrooms} bed</span>
+                            <span>🚿 ${p.bathrooms} bath</span>
+                            <span>📐 ${p.area.toLocaleString()} sqft</span>
+                        </div>
+                    </div>
+                </div>`;
+            wrap.addEventListener('click', () => router.navigate(`/properties/${p.id}`));
+            return wrap;
         }
-        init();
+
+        // ── 3. Page renderers ─────────────────────────────────────────────
+
+        function renderHome() {
+            const featured = properties.filter(p => p.featured);
+            root.innerHTML = `
+                <section class="hero">
+                    <div class="hero-content">
+                        <div class="hero-badge">⚡ Powered by Forge WebAssembly</div>
+                        <h1 class="hero-title">Find Your <span>Dream Home</span></h1>
+                        <p class="hero-subtitle">Discover luxury properties crafted for modern living. Browse our curated collection of homes, apartments, and premium estates.</p>
+                        <div class="hero-actions">
+                            <button class="btn-primary" id="hero-browse">Browse Properties</button>
+                            <button class="btn-outline" id="hero-contact">Talk to an Agent</button>
+                        </div>
+                    </div>
+                </section>
+
+                <div class="stats-strip">
+                    <div class="stats-inner">
+                        <div><div class="stat-value">1,200+</div><div class="stat-label">Properties Listed</div></div>
+                        <div><div class="stat-value">840</div><div class="stat-label">Happy Clients</div></div>
+                        <div><div class="stat-value">48</div><div class="stat-label">Expert Agents</div></div>
+                        <div><div class="stat-value">12</div><div class="stat-label">Cities Covered</div></div>
+                    </div>
+                </div>
+
+                <div class="section">
+                    <div class="section-header">
+                        <div>
+                            <div class="section-title">Featured Properties</div>
+                            <div class="section-subtitle">Handpicked listings from top locations</div>
+                        </div>
+                        <a href="/properties" class="section-link" data-link>View all →</a>
+                    </div>
+                    <div class="property-grid" id="featured-grid"></div>
+                </div>
+
+                <div class="section" style="padding-top:0">
+                    <div class="section-header"><div class="section-title">Why ForgeEstates?</div></div>
+                    <div class="features-grid">
+                        <div class="feature-card"><div class="feature-icon">🔍</div><div class="feature-title">Curated Listings</div><div class="feature-text">Every property is verified and vetted by our team before listing.</div></div>
+                        <div class="feature-card"><div class="feature-icon">🤝</div><div class="feature-title">Expert Agents</div><div class="feature-text">Work with seasoned agents who know your local market inside-out.</div></div>
+                        <div class="feature-card"><div class="feature-icon">⚡</div><div class="feature-title">Fast & Transparent</div><div class="feature-text">No hidden fees. Instant data updates powered by Forge WebAssembly.</div></div>
+                    </div>
+                </div>
+
+                <div class="cta-section">
+                    <h2>Ready to Find Your Home?</h2>
+                    <p>Our agents are standing by to help you navigate the market.</p>
+                    <div class="cta-actions">
+                        <button class="btn-white" id="cta-browse">Browse Listings</button>
+                        <button class="btn-ghost" id="cta-contact">Contact an Agent</button>
+                    </div>
+                </div>`;
+
+            const grid = document.getElementById('featured-grid');
+            if (featured.length) {
+                featured.forEach(p => grid.appendChild(createPropertyCard(p)));
+            } else {
+                grid.innerHTML = `<div class="empty-state"><div class="icon">🏘</div>Loading properties…</div>`;
+            }
+            document.getElementById('hero-browse')?.addEventListener('click', () => router.navigate('/properties'));
+            document.getElementById('hero-contact')?.addEventListener('click', () => router.navigate('/contact'));
+            document.getElementById('cta-browse')?.addEventListener('click', () => router.navigate('/properties'));
+            document.getElementById('cta-contact')?.addEventListener('click', () => router.navigate('/contact'));
+        }
+
+        function renderProperties(typeFilter = 'all') {
+            const searchParams = new URLSearchParams(window.location.search);
+            typeFilter = searchParams.get('type') || typeFilter;
+
+            root.innerHTML = `
+                <div class="section">
+                    <div class="section-header">
+                        <div>
+                            <div class="section-title">All Properties</div>
+                            <div class="section-subtitle" id="prop-count"></div>
+                        </div>
+                        <div class="filter-bar">
+                            <button class="filter-btn ${typeFilter==='all'  ? 'active':''}" data-filter="all">All</button>
+                            <button class="filter-btn ${typeFilter==='sale' ? 'active':''}" data-filter="sale">For Sale</button>
+                            <button class="filter-btn ${typeFilter==='rent' ? 'active':''}" data-filter="rent">For Rent</button>
+                        </div>
+                    </div>
+                    <div class="property-grid fade-in" id="prop-grid"></div>
+                </div>`;
+
+            function applyFilter(filter) {
+                const grid = document.getElementById('prop-grid');
+                const count = document.getElementById('prop-count');
+                if (!grid) return;
+                grid.innerHTML = '';
+                const filtered = filter === 'all' ? properties : properties.filter(p => p.type === filter);
+                count.textContent = `${filtered.length} properties found`;
+                if (filtered.length) {
+                    filtered.forEach(p => grid.appendChild(createPropertyCard(p)));
+                } else {
+                    grid.innerHTML = `<div class="empty-state"><div class="icon">🔎</div>No properties match this filter.</div>`;
+                }
+                // Update active button
+                document.querySelectorAll('.filter-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.filter === filter);
+                });
+                history.replaceState({}, '', filter === 'all' ? '/properties' : `/properties?type=${filter}`);
+            }
+
+            applyFilter(typeFilter);
+
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.addEventListener('click', () => applyFilter(btn.dataset.filter));
+            });
+        }
+
+        function renderPropertyDetail(id) {
+            const p = properties.find(item => item.id === Number(id));
+            if (!p) {
+                root.innerHTML = `<div class="section"><div class="empty-state"><div class="icon">🔎</div><p>Property not found.</p></div></div>`;
+                return;
+            }
+            const similar = properties.filter(item => item.type === p.type && item.id !== p.id).slice(0, 3);
+
+            root.innerHTML = `
+                <div class="detail-page fade-in">
+                    <div class="detail-breadcrumb">
+                        <a href="/properties" data-link>Properties</a>
+                        <span>›</span>
+                        <span>${p.title}</span>
+                    </div>
+                    <div class="detail-title">${p.title}</div>
+                    <div class="detail-location">📍 ${p.location}</div>
+                    <div class="detail-grid">
+                        <div>
+                            <div class="detail-image">🏠</div>
+                            <div class="detail-desc-box">
+                                <h2>About this property</h2>
+                                <p>${p.description}</p>
+                            </div>
+                            <div class="similar-section" id="similar-section">
+                                <div class="section-title" style="margin-bottom:1.5rem">Similar Properties</div>
+                                <div class="property-grid" id="similar-grid"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="price-card">
+                                <div class="price-value">${fmt(p.price)}${p.type==='rent' ? '<span style="font-size:1rem;font-weight:500;color:#64748b">/mo</span>' : ''}</div>
+                                <div class="price-label">Listed ${p.type === 'rent' ? 'for rent' : 'for sale'}</div>
+                                <button class="btn-primary" style="width:100%" id="schedule-btn">📅 Schedule a Tour</button>
+                            </div>
+                            <div class="specs-card">
+                                <h3>Property Details</h3>
+                                <div class="spec-row"><span>Bedrooms</span><strong>${p.bedrooms}</strong></div>
+                                <div class="spec-row"><span>Bathrooms</span><strong>${p.bathrooms}</strong></div>
+                                <div class="spec-row"><span>Total Area</span><strong>${p.area.toLocaleString()} sq ft</strong></div>
+                                <div class="spec-row"><span>Listing Type</span><strong style="text-transform:capitalize">${p.type}</strong></div>
+                                <div class="spec-row"><span>Location</span><strong>${p.location}</strong></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+
+            const grid = document.getElementById('similar-grid');
+            if (similar.length) {
+                similar.forEach(item => grid.appendChild(createPropertyCard(item)));
+            } else {
+                document.getElementById('similar-section').style.display = 'none';
+            }
+
+            document.getElementById('schedule-btn')?.addEventListener('click', () => router.navigate('/contact'));
+        }
+
+        function renderAbout() {
+            root.innerHTML = `
+                <div class="about-hero">
+                    <div class="hero-content">
+                        <div class="hero-badge">🏢 Est. 2016</div>
+                        <h1 class="hero-title">About <span>ForgeEstates</span></h1>
+                        <p class="hero-subtitle">A decade of connecting people with the homes they deserve.</p>
+                    </div>
+                </div>
+                <div class="about-grid fade-in">
+                    <div class="about-img">🏢</div>
+                    <div class="about-text">
+                        <h2>We Believe Everyone Deserves a Great Home</h2>
+                        <p>Founded in 2016, ForgeEstates has grown from a small boutique agency into one of the most trusted real estate platforms in the country. We combine the personal touch of traditional real estate with cutting-edge technology.</p>
+                        <p>Our platform is powered by the <strong>Forge Framework</strong> — components written in C that compile to WebAssembly, delivering blazing-fast performance that lets you browse listings with zero lag.</p>
+                        <ul class="value-list">
+                            <li>Transparent pricing — no hidden fees, ever</li>
+                            <li>Every listing personally verified by our team</li>
+                            <li>24/7 agent support for buyers and sellers</li>
+                            <li>Dedicated post-sale concierge service</li>
+                        </ul>
+                    </div>
+                </div>
+                <div class="section" style="padding-top:0">
+                    <div class="section-header"><div class="section-title">Our Values</div></div>
+                    <div class="features-grid">
+                        <div class="feature-card"><div class="feature-icon">🤝</div><div class="feature-title">Trust</div><div class="feature-text">We build long-term relationships, not just transactions.</div></div>
+                        <div class="feature-card"><div class="feature-icon">💡</div><div class="feature-title">Innovation</div><div class="feature-text">Pioneering real estate tech with Forge WebAssembly.</div></div>
+                        <div class="feature-card"><div class="feature-icon">🌍</div><div class="feature-title">Community</div><div class="feature-text">Giving back 1% of every transaction to local housing initiatives.</div></div>
+                    </div>
+                </div>`;
+        }
+
+        const AGENTS = [
+            { name: 'Sarah Chen',     role: 'Senior Listing Agent',     bio: '12 years in luxury real estate. Specialises in Beverly Hills and Santa Monica.',    sales: 94,  value: '$420M', icon: '👩' },
+            { name: 'Marcus Rivera',  role: 'Buyer\'s Agent',           bio: 'First-time buyer specialist with deep expertise in the Austin metro market.',        sales: 67,  value: '$82M',  icon: '👨' },
+            { name: 'Priya Nair',     role: 'Commercial Specialist',    bio: 'Handles mixed-use and investment properties across Manhattan and Brooklyn.',         sales: 38,  value: '$510M', icon: '👩' },
+            { name: 'James O\'Brien', role: 'Relocation Consultant',    bio: 'Helps corporate clients relocate smoothly. Based in Chicago.',                      sales: 55,  value: '$94M',  icon: '👨' },
+            { name: 'Aiko Tanaka',    role: 'Luxury Rental Specialist', bio: 'Expert in high-end rentals across Miami Beach and Brickell.',                       sales: 120, value: '$28M',  icon: '👩' },
+            { name: 'Carlos Mena',    role: 'Investment Advisor',       bio: 'Identifies high-yield properties for investors in the Sun Belt states.',             sales: 43,  value: '$190M', icon: '👨' },
+        ];
+
+        function renderAgents() {
+            root.innerHTML = `
+                <div class="section">
+                    <div class="section-header">
+                        <div>
+                            <div class="section-title">Meet Our Agents</div>
+                            <div class="section-subtitle">Experienced professionals ready to help you</div>
+                        </div>
+                    </div>
+                    <div class="agents-grid fade-in" id="agents-grid"></div>
+                </div>`;
+
+            const grid = document.getElementById('agents-grid');
+            AGENTS.forEach(a => {
+                const card = document.createElement('div');
+                card.className = 'agent-card';
+                card.innerHTML = `
+                    <div class="agent-avatar" style="background:linear-gradient(135deg,#eff0fe,#ddd6fe)">${a.icon}</div>
+                    <div class="agent-name">${a.name}</div>
+                    <div class="agent-role">${a.role}</div>
+                    <div class="agent-bio">${a.bio}</div>
+                    <div class="agent-stats">
+                        <div class="agent-stat"><span>${a.sales}</span><small>Sales</small></div>
+                        <div class="agent-stat"><span>${a.value}</span><small>Volume</small></div>
+                    </div>`;
+                grid.appendChild(card);
+            });
+        }
+
+        function renderContact() {
+            root.innerHTML = `
+                <div class="section fade-in">
+                    <div class="contact-layout">
+                        <div class="contact-info">
+                            <h2>Get in Touch</h2>
+                            <p>Whether you're buying, selling, or just browsing — our agents are here to help you every step of the way.</p>
+                            <div class="contact-detail-list">
+                                <div class="contact-detail-item">
+                                    <div class="contact-detail-icon">📞</div>
+                                    <div class="contact-detail-text"><strong>Phone</strong><span>+1 (555) 234-5678</span></div>
+                                </div>
+                                <div class="contact-detail-item">
+                                    <div class="contact-detail-icon">✉️</div>
+                                    <div class="contact-detail-text"><strong>Email</strong><span>hello@forgeestates.com</span></div>
+                                </div>
+                                <div class="contact-detail-item">
+                                    <div class="contact-detail-icon">📍</div>
+                                    <div class="contact-detail-text"><strong>Office</strong><span>350 Market St, San Francisco CA</span></div>
+                                </div>
+                                <div class="contact-detail-item">
+                                    <div class="contact-detail-icon">🕐</div>
+                                    <div class="contact-detail-text"><strong>Hours</strong><span>Mon–Fri 9am–6pm PST</span></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="contact-form-box">
+                            <div class="form-title">Send Us a Message</div>
+                            <div class="form-subtitle">We'll respond within 24 hours.</div>
+                            <div id="contact-form-area"></div>
+                        </div>
+                    </div>
+                </div>`;
+
+            // Use the Forge ContactForm custom element
+            const area = document.getElementById('contact-form-area');
+            customElements.whenDefined('forge-contact-form').then(() => {
+                const form = document.createElement('forge-contact-form');
+                form.property_title = 'General Inquiry';
+                area.appendChild(form);
+            }).catch(() => {
+                // Fallback plain form
+                area.innerHTML = `<form id="plain-form">
+                    <div class="form-row">
+                        <div class="form-group"><label class="form-label">Full Name *</label><input class="form-input" type="text" placeholder="John Smith" required></div>
+                        <div class="form-group"><label class="form-label">Email *</label><input class="form-input" type="email" placeholder="john@example.com" required></div>
+                    </div>
+                    <div class="form-group"><label class="form-label">Message *</label><textarea class="form-textarea" placeholder="How can we help?" required></textarea></div>
+                    <button type="submit" class="form-submit">Send Message →</button>
+                </form>`;
+                document.getElementById('plain-form').addEventListener('submit', e => {
+                    e.preventDefault();
+                    area.innerHTML = `<div class="success-box"><div class="success-icon">✅</div><h3>Thank you!</h3><p>We'll be in touch shortly.</p></div>`;
+                });
+            });
+        }
+
+        // ── 4. Router ──────────────────────────────────────────────────────
+        const router = {
+            routes: [],
+            add(pattern, handler) {
+                this.routes.push({ pattern, handler });
+                return this;
+            },
+            navigate(path) {
+                history.pushState({}, '', path);
+                this.resolve();
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            },
+            resolve() {
+                const path = window.location.pathname;
+                for (const { pattern, handler } of this.routes) {
+                    const keys = [];
+                    const regexStr = pattern.replace(/:(\w+)/g, (_, k) => { keys.push(k); return '([^/]+)'; });
+                    const match = path.match(new RegExp(`^${regexStr}$`));
+                    if (match) {
+                        const params = {};
+                        keys.forEach((k, i) => params[k] = match[i + 1]);
+                        handler(params);
+                        this._updateNav(path);
+                        return;
+                    }
+                }
+                // 404 fallback → home
+                renderHome();
+                this._updateNav('/');
+            },
+            _updateNav(path) {
+                document.querySelectorAll('[data-nav]').forEach(el => {
+                    const href = el.getAttribute('href');
+                    const isActive = href === path ||
+                        (href === '/properties' && path.startsWith('/properties'));
+                    el.classList.toggle('active', isActive);
+                });
+            }
+        };
+
+        router
+            .add('/',                renderHome)
+            .add('/properties',      () => renderProperties())
+            .add('/properties/:id',  ({ id }) => renderPropertyDetail(id))
+            .add('/agents',          renderAgents)
+            .add('/about',           renderAbout)
+            .add('/contact',         renderContact);
+
+        // Intercept [data-link] clicks
+        document.addEventListener('click', e => {
+            const el = e.target.closest('[data-link]');
+            if (el) {
+                e.preventDefault();
+                router.navigate(el.getAttribute('href'));
+            }
+        });
+
+        // Handle browser back/forward
+        window.addEventListener('popstate', () => router.resolve());
+
+        // Initial render
+        router.resolve();
+
     </script>
 
-    <!-- Load compiled Forge component modules (no-wasm mode: pure JS) -->
+    <!-- ── Forge leaf components (no-wasm pure-JS mode) ───────────────── -->
     <script type="module" src="dist/PropertyCard.forge.js"></script>
     <script type="module" src="dist/PropertyDetail.forge.js"></script>
     <script type="module" src="dist/ContactForm.forge.js"></script>
-    <script type="module" src="dist/App.forge.js"></script>
 
 </body>
-
 </html>

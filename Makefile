@@ -110,6 +110,12 @@ examples: compiler
 	    examples/04-property-site/PropertyCard.cx examples/04-property-site/PropertyDetail.cx \
 	    examples/04-property-site/ContactForm.cx \
 	    examples/04-property-site/App.cx
+	$(BUILD_DIR)/forge compile --no-wasm --prerender -o examples/05-ecommerce/dist \
+	    examples/05-ecommerce/ProductCard.cx examples/05-ecommerce/ProductDetail.cx \
+	    examples/05-ecommerce/CheckoutForm.cx \
+	    examples/05-ecommerce/App.cx
+	python3 inject_ssg.py
+	python3 examples/05-ecommerce/inject.py
 	@echo "  \033[32m✓\033[0m All examples compiled"
 
 # ─── Tests ────────────────────────────────────────────────────────────────────

@@ -1,0 +1,81 @@
+/*
+ * Forge Example 05 — ProductCard Component
+ *
+ * Reusable product card for the ecommerce catalogue grid.
+ *
+ * Demonstrates:
+ *   - @props with mixed types (int, float, char*)
+ *   - @computed for formatted price and badge rendering
+ *   - @on handlers emitting custom events to parent (App)
+ *   - Conditional class binding via ternary
+ */
+
+#include <forge/web.h>
+
+@component ProductCard {
+
+    @props {
+        int    product_id;
+        char  *name;
+        char  *category;
+        float  price;
+        float  original_price;   /* 0 if no sale */
+        float  rating;
+        int    reviews;
+        int    stock;
+        char  *emoji;
+        char  *tags;             /* JSON string e.g. ["sale","bestseller"] */
+    }
+
+    @computed {
+        char *price_str    = forge_sprintf("$%.2f", props.price);
+        char *orig_str     = forge_sprintf("$%.2f", props.original_price);
+        int   has_discount = props.original_price > 0;
+        int   stock_low    = props.stock > 0 && props.stock <= 5;
+        int   out_of_stock = props.stock == 0;
+    }
+
+    @on(add_to_cart) {
+        /* Parent (App) listens for forge-product-card:add_to_cart */
+        window.dispatchEvent(new CustomEvent("forge:add-to-cart", {
+            detail: { id: this._props.product_id }
+        }));
+    }
+
+    @on(view_detail) {
+        window.dispatchEvent(new CustomEvent("forge:view-product", {
+            detail: { id: this._props.product_id }
+        }));
+    }
+
+    @template {
+        <div class="product-card">
+            <div class="product-card-img" onclick={@view_detail}>
+                <span class="product-emoji">{props.emoji}</span>
+                <div class="product-badges"></div>
+            </div>
+            <div class="product-card-body">
+                <div class="product-cat">{props.category}</div>
+                <div class="product-name" onclick={@view_detail}>{props.name}</div>
+                <div class="stars">
+                    <span class="star-count">{props.rating} ({props.reviews} reviews)</span>
+                </div>
+                <div class="product-price-row">
+                    <div class="product-price">{computed.price_str}</div>
+                    <if condition={computed.has_discount}>
+                        <div class="product-orig">{computed.orig_str}</div>
+                    </if>
+                </div>
+                <if condition={computed.stock_low}>
+                    <div class="stock-low">Only {props.stock} left!</div>
+                </if>
+                <div class="product-card-footer">
+                    <button class={computed.out_of_stock ? "add-to-cart-btn disabled" : "add-to-cart-btn"} onclick={@add_to_cart}>
+                        <if condition={computed.out_of_stock}>Out of Stock</if>
+                        <if condition={!computed.out_of_stock}>Add to Cart</if>
+                    </button>
+                </div>
+            </div>
+        </div>
+    }
+}

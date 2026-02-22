@@ -198,7 +198,9 @@ static void emit_nw_html(const HtmlNode *n, const char *parent_var,
       const char *aname = n->attrs[i].name;
       const char *aval = n->attrs[i].value ? n->attrs[i].value : "";
       if (n->attrs[i].is_expr) {
-        fprintf(out, "        __cc%d['%s'] = %s;\n", id, aname, aval);
+        fprintf(out, "        __cc%d['%s'] = ", id, aname);
+        emit_expr_js(aval, out, local_item);
+        fprintf(out, ";\n");
       } else {
         fprintf(out, "        __cc%d.setAttribute('%s', ", id, aname);
         emit_js_str(aval, out);
@@ -411,8 +413,10 @@ static void emit_nw_html(const HtmlNode *n, const char *parent_var,
     fprintf(out, ";\n");
     fprintf(out, "          if (Array.isArray(__list)) {\n");
     fprintf(out, "            __list.forEach((%s) => {\n", as);
+    char _for_var[64];
+    snprintf(_for_var, sizeof(_for_var), "__e%d", id);
     for (int i = 0; i < n->child_count; i++) {
-      emit_nw_html(&n->children[i], "__e%d", comp, out, as);
+      emit_nw_html(&n->children[i], _for_var, comp, out, as);
     }
     fprintf(out, "            });\n");
     fprintf(out, "          }\n");
@@ -580,7 +584,9 @@ static int emit_nowasm_component(const ComponentNode *c,
             /* Fallback: just emit as-is */
             emit_expr_js(expr, out, NULL);
           }
-          /* Regular expression */
+          /* ↑ forge_sprintf branch ends here — do NOT emit expr again */
+        } else {
+          /* Non-forge_sprintf: translate C expression directly to JS */
           emit_expr_js(expr, out, NULL);
         }
       } else {
