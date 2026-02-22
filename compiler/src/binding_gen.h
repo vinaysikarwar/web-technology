@@ -51,4 +51,13 @@ int binding_gen_ssr_js(const ComponentNode *c,
                        const ComponentNode **registry, int registry_count,
                        FILE *out);
 
+/* ─── SSR HTTP Server (Node.js) ─────────────────────────────────────────────
+ * Generates forge-ssr-server.js — a ready-to-run Node.js SSR HTTP server.
+ * Includes: API proxy, static file serving, template injection, clear-patch.
+ * Users only need to fill in resolveState() with their API fetch logic.
+ */
+int binding_gen_ssr_server(const ComponentNode *c,
+                            const ComponentNode **registry, int registry_count,
+                            FILE *out);
+
 #endif /* FORGE_BINDING_GEN_H */

@@ -696,11 +696,51 @@ customElements.whenDefined('forge-app').then(async () => {
         }
     };
 
-    /* Load categories first, then featured medicines */
-    await loadCategories();
-    await fetchMedicines(0, '', true);
-    app._state.loading = 0;
-    app._refresh();
+    /* Use SSR pre-fetched data if available (injected by ssr-server.js) */
+    const ssrd = window.__SSR_DATA__;
+    if (ssrd && ssrd.categories && ssrd.medicines) {
+        /* Seed from SSR — no extra API round-trips needed */
+        allCategories = ssrd.categories.map(c => ({ ...c, active: 0 }));
+        app.categories = allCategories;
+        allMedicines = ssrd.medicines.map(m => ({
+            ...m,
+            price:             parseFloat(m.price) || 0,
+            category_name:     m.category?.name || '',
+            manufacturer_name: m.manufacturer?.name || '',
+            emoji:             getMedEmoji(m.dosage_form),
+        }));
+        totalCount = ssrd.total || allMedicines.length;
+        app._state.total_count = totalCount;
+        app.products = allMedicines;
+        app._state.loading = 0;
+        app._refresh();
+        /* Silently refresh categories in background for fresh data */
+        loadCategories().catch(() => {});
+    } else if (ssrd && ssrd.medicine) {
+        /* SSR data for a detail page — seed detail state */
+        const med = {
+            ...ssrd.medicine,
+            price:             parseFloat(ssrd.medicine.price) || 0,
+            category_name:     ssrd.medicine.category?.name || '',
+            manufacturer_name: ssrd.medicine.manufacturer?.name || '',
+            emoji:             getMedEmoji(ssrd.medicine.dosage_form),
+        };
+        allMedicines.push(med);
+        /* Route to detail view directly */
+        app._state.page = 2;
+        app._state.selected_id = med.id;
+        populateDetail(med);
+        updateSEO(2, med);
+        /* Load categories + medicines in background */
+        loadCategories().catch(() => {});
+        fetchMedicines(0, '', true).catch(() => {});
+    } else {
+        /* No SSR data — fetch everything fresh (dev-server.js fallback) */
+        await loadCategories();
+        await fetchMedicines(0, '', true);
+        app._state.loading = 0;
+        app._refresh();
+    }
 
     /* Apply initial URL */
     updateSEO(0, null);

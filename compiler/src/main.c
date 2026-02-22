@@ -45,6 +45,7 @@ static void print_usage(void) {
          "  --ast          Dump AST, no code gen\n"
          "  --no-wasm      Generate .gen.c only, skip Clang\n"
          "  --prerender    Generate static HTML for SEO (SSG)\n"
+         "  --ssr          Generate SSR server (App.forge.ssr.js + forge-ssr-server.js)\n"
          "  --no-types     Skip TypeScript .d.ts output\n"
          "  --iife         JS as IIFE (not ES module)\n"
          "  --no-web-comp  Skip customElements.define\n"
@@ -349,14 +350,28 @@ int main(int argc, char **argv) {
   if (cfg.ssr && rc == 0 && registry_count > 0) {
     /* Generate SSR renderer for the last compiled component (typically the root App) */
     const ComponentNode *root = registry[registry_count - 1];
+
+    /* 1. Component render function: App.forge.ssr.js */
     char ssr_path[512];
     snprintf(ssr_path, sizeof(ssr_path), "%s/%s.forge.ssr.js", cfg.out_dir, root->name);
     FILE *sf = fopen(ssr_path, "w");
     if (sf) {
       binding_gen_ssr_js(root, registry, registry_count, sf);
       fclose(sf);
-      printf("forge: \033[32m✓\033[0m %s (SSR)\n", ssr_path);
+      printf("forge: \033[32m✓\033[0m %s (SSR renderer)\n", ssr_path);
     }
+
+    /* 2. HTTP server: forge-ssr-server.js */
+    char srv_path[512];
+    snprintf(srv_path, sizeof(srv_path), "%s/forge-ssr-server.js", cfg.out_dir);
+    FILE *svf = fopen(srv_path, "w");
+    if (svf) {
+      binding_gen_ssr_server(root, registry, registry_count, svf);
+      fclose(svf);
+      printf("forge: \033[32m✓\033[0m %s (SSR server)\n", srv_path);
+    }
+
+    printf("forge: \033[32mSSR ready\033[0m → node %s/forge-ssr-server.js\n", cfg.out_dir);
   }
 
   /* Note: In a production compiler, we would properly track all Program

@@ -32,11 +32,26 @@ make install           # Install forge + forge-dev to /usr/local/bin
 ./build/forge-dev --dir examples/04-property-site --port 3000
 ```
 
+### Compiling with built-in SSR (example 06)
+```bash
+./build/forge compile --no-wasm --prerender --ssr \
+    -o examples/06-medicine-shop/dist \
+    examples/06-medicine-shop/CategoryCard.cx \
+    examples/06-medicine-shop/MedicineCard.cx \
+    examples/06-medicine-shop/MedicineDetail.cx \
+    examples/06-medicine-shop/App.cx
+
+# Then run the generated SSR server:
+API_BASE=http://localhost:8000 API_TOKEN=<jwt> \
+    node examples/06-medicine-shop/dist/forge-ssr-server.js
+```
+
 ### Key compiler flags
 | Flag | Effect |
 |------|--------|
 | `--no-wasm` | Generate pure-JS DOM renderer (skip Clang/WASM) |
 | `--prerender` | Emit SSG-pre-rendered static HTML (`--prerender` writes `*.forge.html`) |
+| `--ssr` | Emit SSR server: `App.forge.ssr.js` (render fn) + `forge-ssr-server.js` (HTTP server) |
 | `-o <dir>` | Output directory (default: `./dist`) |
 | `--ast` | Dump parsed AST to stdout and exit |
 | `--no-types` | Skip TypeScript `.d.ts` generation |
