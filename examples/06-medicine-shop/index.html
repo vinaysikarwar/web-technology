@@ -202,8 +202,8 @@ img { max-width:100%; height:auto; }
 'use strict';
 
 /* ── API Config ─────────────────────────────────────────────────────────── */
-const API_BASE = '/api';
-/* Token is injected server-side by dev-server.js proxy — no need to set here */
+const API_BASE = 'http://localhost:8000/api';
+/* Set token via: localStorage.setItem('mediforge_token', 'your-jwt-here') */
 let AUTH_TOKEN = localStorage.getItem('mediforge_token') || '';
 
 async function apiFetch(endpoint, opts = {}) {
