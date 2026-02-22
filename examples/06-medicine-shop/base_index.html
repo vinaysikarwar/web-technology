@@ -379,10 +379,36 @@ async function loadMedicines(catId = 0, query = '', offset = 0) {
     };
 }
 
-/* ── API: Load medicine detail ──────────────────────────────────────────── */
-async function loadMedicineDetail(id) {
+/* ── API: Load medicine detail by slug (fallback: by id) ────────────────── */
+async function loadMedicineDetail(id, slug) {
+    if (slug) {
+        const data = await apiFetch(`/medicines/?slug=${encodeURIComponent(slug)}`);
+        if (data.results && data.results.length > 0)
+            return flattenMedicine(data.results[0]);
+    }
+    /* Fallback for direct URL access when slug is unknown */
     const m = await apiFetch(`/medicines/${id}/`);
     return flattenMedicine(m);
+}
+
+/* ── Populate detail state from a medicine object ───────────────────────── */
+function populateDetail(med) {
+    app._state.det_name       = med.name;
+    app._state.det_price      = med.price;
+    app._state.det_cat        = med.category_name || med.category?.name  || '';
+    app._state.det_mfr        = med.manufacturer_name || med.manufacturer?.name || '';
+    app._state.det_ingredient = med.primary_ingredient || '';
+    app._state.det_strength   = med.primary_strength   || '';
+    app._state.det_form       = med.dosage_form         || '';
+    app._state.det_pack       = med.pack_unit           || '';
+    app._state.det_desc       = med.description         || '';
+    app._state.det_emoji      = med.emoji || getMedEmoji(med.dosage_form);
+    app._state.det_rx         = med.prescription_required ? 1 : 0;
+    /* stock: [] means no stock records tracked — default to 99 so cart works */
+    app._state.det_stock      = Array.isArray(med.stock)
+        ? (med.stock.length > 0 ? med.stock.length * 10 : 99)
+        : (med.stock || 99);
+    app._refresh();
 }
 
 /* ── Router ─────────────────────────────────────────────────────────────── */
@@ -466,25 +492,21 @@ async function viewMedicine(id) {
     app._refresh();
 
     try {
-        /* Try from cache first, then fetch */
-        let med = allMedicines.find(m => m.id === id);
-        if (!med) med = await loadMedicineDetail(id);
+        const cached = allMedicines.find(m => m.id === id);
 
-        app._state.det_name       = med.name;
-        app._state.det_price      = med.price;
-        app._state.det_cat        = med.category_name || (med.category?.name || '');
-        app._state.det_mfr        = med.manufacturer_name || (med.manufacturer?.name || '');
-        app._state.det_ingredient = med.primary_ingredient || '';
-        app._state.det_strength   = med.primary_strength   || '';
-        app._state.det_form       = med.dosage_form         || '';
-        app._state.det_pack       = med.pack_unit           || '';
-        app._state.det_desc       = med.description         || '';
-        app._state.det_emoji      = med.emoji || getMedEmoji(med.dosage_form);
-        app._state.det_rx         = med.prescription_required ? 1 : 0;
-        app._state.det_stock      = Array.isArray(med.stock) ? med.stock.length : (med.stock || 99);
-        app._refresh();
+        /* Show cached data instantly so the UI is not blank */
+        if (cached) populateDetail(cached);
 
-        updateSEO(2, med);
+        /* Always fetch fresh detail from slug API for complete data */
+        const fresh = await loadMedicineDetail(id, cached?.slug);
+        populateDetail(fresh);
+
+        /* Cache the enriched data for cart / SEO lookups */
+        const idx = allMedicines.findIndex(m => m.id === id);
+        if (idx >= 0) allMedicines[idx] = fresh;
+        else allMedicines.push(fresh);
+
+        updateSEO(2, fresh);
         pushRoute(2, id);
     } catch (err) {
         toast('Could not load medicine details', 'error');
